@@ -8,7 +8,7 @@ use crossterm::{
 use crate::font::{GLYPH_H, GLYPH_W, line_width};
 use crate::theme;
 
-/// Геометрия центрированного блока (рамка + часы + дата).
+/// Geometry of the centered block (frame + clock + date).
 pub struct Layout {
     pub pad_x: usize,
     pub pad_y: usize,
@@ -20,7 +20,7 @@ pub struct Layout {
 const H_PAD_INSIDE: usize = 4;
 
 fn block_height() -> usize {
-    // верх рамки + пустая + часы + gap + дата + пустая + низ рамки
+    // frame top + empty + clock + gap + date + empty + frame bottom
     GLYPH_H + 6
 }
 
@@ -133,7 +133,7 @@ fn write_date(
     Ok(())
 }
 
-/// Полный кадр: вертикальный отступ + рамка с часами и датой.
+/// Full frame: vertical offset + frame with clock and date.
 pub fn render(
     stdout: &mut io::Stdout,
     layout: &Layout,

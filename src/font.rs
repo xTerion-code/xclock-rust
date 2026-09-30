@@ -1,8 +1,8 @@
 pub const GLYPH_H: usize = 7;
 pub const GLYPH_W: usize = 5;
 
-/// Один символ крупным блочным шрифтом.
-/// `colon_visible` управляет миганием двоеточия.
+/// One character in the large block font.
+/// `colon_visible` controls colon blinking.
 pub fn glyph(ch: char, colon_visible: bool) -> [&'static str; GLYPH_H] {
     match ch {
         '0' => [
@@ -116,7 +116,7 @@ pub fn glyph(ch: char, colon_visible: bool) -> [&'static str; GLYPH_H] {
     }
 }
 
-/// Строка времени → строки глифов. Разделитель между глифами — 1 пробел.
+/// Time string → glyph rows. Glyphs are separated by 1 space.
 pub fn render_big(time: &str, colon_visible: bool) -> Vec<String> {
     let chars: Vec<char> = time.chars().collect();
     let mut rows = vec![String::new(); GLYPH_H];
@@ -132,7 +132,7 @@ pub fn render_big(time: &str, colon_visible: bool) -> Vec<String> {
     rows
 }
 
-/// Ширина отрендеренной строки из `n_chars` символов.
+/// Width of a rendered line of `n_chars` characters.
 pub fn line_width(n_chars: usize) -> usize {
     n_chars * GLYPH_W + n_chars.saturating_sub(1)
 }

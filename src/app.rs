@@ -20,14 +20,14 @@ pub fn run() -> io::Result<()> {
 
     let mut stdout = io::stdout();
 
-    // alternate screen + clear + hide cursor
+    // alternate screen + clear + hide cursor (restored on exit)
     execute!(stdout, terminal::EnterAlternateScreen)?;
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
     execute!(stdout, cursor::Hide)?;
 
     while running.load(Ordering::SeqCst) {
         let now = Local::now();
-        // Мигание двоеточия 1 Гц
+        // Colon blink at 1 Hz
         let colon_visible = now.timestamp_subsec_millis() < 500;
         let time = now.format("%H:%M:%S").to_string();
         let time_chars: Vec<char> = time.chars().collect();

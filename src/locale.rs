@@ -1,42 +1,42 @@
 use chrono::{DateTime, Datelike, Local, Weekday};
 
-pub fn weekday_ru(weekday: Weekday) -> &'static str {
+pub fn weekday_name(weekday: Weekday) -> &'static str {
     match weekday {
-        Weekday::Mon => "Понедельник",
-        Weekday::Tue => "Вторник",
-        Weekday::Wed => "Среда",
-        Weekday::Thu => "Четверг",
-        Weekday::Fri => "Пятница",
-        Weekday::Sat => "Суббота",
-        Weekday::Sun => "Воскресенье",
+        Weekday::Mon => "Monday",
+        Weekday::Tue => "Tuesday",
+        Weekday::Wed => "Wednesday",
+        Weekday::Thu => "Thursday",
+        Weekday::Fri => "Friday",
+        Weekday::Sat => "Saturday",
+        Weekday::Sun => "Sunday",
     }
 }
 
-pub fn month_ru(month: u32) -> &'static str {
+pub fn month_name(month: u32) -> &'static str {
     match month {
-        1 => "января",
-        2 => "февраля",
-        3 => "марта",
-        4 => "апреля",
-        5 => "мая",
-        6 => "июня",
-        7 => "июля",
-        8 => "августа",
-        9 => "сентября",
-        10 => "октября",
-        11 => "ноября",
-        12 => "декабря",
+        1 => "January",
+        2 => "February",
+        3 => "March",
+        4 => "April",
+        5 => "May",
+        6 => "June",
+        7 => "July",
+        8 => "August",
+        9 => "September",
+        10 => "October",
+        11 => "November",
+        12 => "December",
         _ => "",
     }
 }
 
-/// "30 сентября 2026 · Вторник"
+/// "September 30, 2026 · Tuesday"
 pub fn format_date(now: &DateTime<Local>) -> String {
     format!(
-        "{} {} {} · {}",
+        "{} {}, {} · {}",
+        month_name(now.month()),
         now.day(),
-        month_ru(now.month()),
         now.year(),
-        weekday_ru(now.weekday())
+        weekday_name(now.weekday())
     )
 }

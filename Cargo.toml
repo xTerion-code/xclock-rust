@@ -2,6 +2,7 @@
 name = "xclock"
 version = "0.1.0"
 edition = "2024"
+description = "Terminal clock in Rust: large block digit face, date with weekday, frame and blinking colon on crossterm"
 
 [dependencies]
 chrono = "0.4"

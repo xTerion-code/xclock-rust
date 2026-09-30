@@ -1,23 +1,23 @@
 # xclock-rust
 
-Терминальные часы на Rust: крупный блочный циферблат, дата и день недели на русском, рамка и мигающее двоеточие на crossterm.
+Terminal clock in Rust: large block digit face, date with weekday, frame and blinking colon on crossterm.
 
-## Возможности
+## Features
 
-- Крупные ASCII-цифры 7×5, центрирование по размеру терминала
-- Формат времени `HH:MM:SS`, мигание двоеточия 1 Гц
-- Под часами — дата: `30 сентября 2026 · Вторник`
-- Цвета: `HH:MM` — белый жирный, секунды — бирюзовые, рамка и разделители — приглушённые
-- Скруглённая рамка `╭─╮│╰─╯` вокруг блока часов и даты
-- Альтернативный экран: после выхода терминал восстанавливается
-- Выход по `Ctrl+C` с восстановлением курсора и экрана
+- Large ASCII digits 7×5, centered to the terminal size
+- `HH:MM:SS` time format, colon blinking at 1 Hz
+- Date under the clock: `September 30, 2026 · Tuesday`
+- Colors: `HH:MM` in bold white, seconds in cyan, frame and separators dimmed
+- Rounded frame `╭─╮│╰─╯` around the clock and date block
+- Alternate screen: the terminal is restored on exit
+- `Ctrl+C` exit with cursor and screen restored
 
-## Требования
+## Requirements
 
 - Rust 1.98+ / Cargo (edition 2024)
-- Unix-терминал с поддержкой ANSI и UTF-8 (рамка и `█ ▮ ─ │ ╭ ╮ ╰ ╯`)
+- Unix terminal with ANSI and UTF-8 support (frame and `█ ▮ ─ │ ╭ ╮ ╰ ╯`)
 
-## Установка и запуск
+## Install and run
 
 ```bash
 git clone git@github.com:xTerion-code/xclock-rust.git
@@ -25,9 +25,9 @@ cd xclock-rust
 cargo run --release
 ```
 
-Выход: `Ctrl+C`.
+Exit: `Ctrl+C`.
 
-## Пример
+## Example
 
 ```text
 ╭───────────────────────────────────────────────────────╮
@@ -40,43 +40,43 @@ cargo run --release
 │   █   █     █     █     █     █        ▮      █     █  │
 │    ███      █ █████     █ █████           █ █████      │
 │                                                       │
-│              30 сентября 2026 · Вторник               │
+│              September 30, 2026 · Tuesday             │
 │                                                       │
 ╰───────────────────────────────────────────────────────╯
 ```
 
-Внешний вид зависит от шрифта терминала; глифы — `█` и `▮`.
+Rendering depends on the terminal font; glyphs are `█` and `▮`.
 
-## Структура проекта
+## Project structure
 
 ```text
 src/
-  main.rs    — подключение модулей, вызов app::run()
-  app.rs     — цикл приложения, терминал, Ctrl+C, кадр 100 мс
-  font.rs    — шрифт: GLYPH_H/W, glyph(), render_big(), line_width()
-  locale.rs  — русская дата: weekday_ru(), month_ru(), format_date()
-  theme.rs   — цвета: BORDER/SEPARATOR/DATE, time_char_color()
-  ui.rs      — геометрия и отрисовка: Layout, compute_layout(), render()
+  main.rs    — module wiring, calls app::run()
+  app.rs     — application loop, terminal, Ctrl+C, 100 ms frame
+  font.rs    — typeface: GLYPH_H/W, glyph(), render_big(), line_width()
+  locale.rs  — date: weekday_name(), month_name(), format_date()
+  theme.rs   — colors: BORDER/SEPARATOR/DATE, time_char_color()
+  ui.rs      — geometry and drawing: Layout, compute_layout(), render()
 ```
 
-Точки расширения:
+Extension points:
 
-- новый шрифт — только `src/font.rs`
-- другая локализация даты — только `src/locale.rs`
-- другая палитра — только `src/theme.rs`
-- другая компоновка/рамка — только `src/ui.rs`
+- new typeface — only `src/font.rs`
+- different date localization — only `src/locale.rs`
+- different palette — only `src/theme.rs`
+- different layout/frame — only `src/ui.rs`
 
-## Разработка
+## Development
 
 ```bash
 cargo build
 cargo clippy --all-targets
 ```
 
-Проверено: `cargo build` и `cargo clippy --all-targets` без предупреждений.
+Verified: `cargo build` and `cargo clippy --all-targets` with no warnings.
 
-## Зависимости
+## Dependencies
 
-- `chrono 0.4` — локальное время и дата
-- `crossterm 0.29` — альтернативный экран, курсор, цвета
-- `ctrlc 3` — аккуратный выход по `Ctrl+C`
+- `chrono 0.4` — local time and date
+- `crossterm 0.29` — alternate screen, cursor, colors
+- `ctrlc 3` — graceful `Ctrl+C` exit
