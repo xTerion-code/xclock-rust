@@ -12,13 +12,11 @@ pub enum Theme {
     Modern,
     /// Old look: original single-width block digits, white/cyan.
     Classic,
-    /// Compact plain-ASCII 3×3 digits, green phosphor.
-    Compact,
 }
 
 impl Theme {
-    pub fn all() -> [Theme; 3] {
-        [Theme::Modern, Theme::Classic, Theme::Compact]
+    pub fn all() -> [Theme; 2] {
+        [Theme::Modern, Theme::Classic]
     }
 
     /// CLI id: `--theme <id>`.
@@ -26,7 +24,6 @@ impl Theme {
         match self {
             Theme::Modern => "modern",
             Theme::Classic => "classic",
-            Theme::Compact => "compact",
         }
     }
 
@@ -35,16 +32,14 @@ impl Theme {
         match self {
             Theme::Modern => "current: large double-width block digits",
             Theme::Classic => "old: original single-width block digits",
-            Theme::Compact => "compact 3x3 plain-ASCII digits",
         }
     }
 
-    /// Key (`1`/`2`/`3`) that selects this theme live.
+    /// Key (`1`/`2`) that selects this theme live.
     pub fn hotkey(self) -> char {
         match self {
             Theme::Modern => '1',
             Theme::Classic => '2',
-            Theme::Compact => '3',
         }
     }
 
@@ -73,11 +68,6 @@ impl Theme {
                 scale_x: 1,
                 gap_x: 1,
             },
-            Theme::Compact => Style {
-                face: Face::Compact,
-                scale_x: 1,
-                gap_x: 1,
-            },
         }
     }
 
@@ -94,17 +84,11 @@ impl Theme {
     }
 
     pub fn hours_minutes(self) -> Color {
-        match self {
-            Theme::Compact => Color::Green,
-            _ => Color::White,
-        }
+        Color::White
     }
 
     pub fn seconds(self) -> Color {
-        match self {
-            Theme::Compact => Color::DarkGreen,
-            _ => Color::Cyan,
-        }
+        Color::Cyan
     }
 
     /// "HH:MM:SS" -> chars before `SECONDS_START` in the main color,
@@ -126,7 +110,7 @@ mod tests {
     fn parses_ids_case_insensitively() {
         assert_eq!(Theme::from_str("modern"), Some(Theme::Modern));
         assert_eq!(Theme::from_str("Classic"), Some(Theme::Classic));
-        assert_eq!(Theme::from_str("COMPACT"), Some(Theme::Compact));
+        assert_eq!(Theme::from_str("MODERN"), Some(Theme::Modern));
         assert_eq!(Theme::from_str("retro"), None);
         assert_eq!(Theme::from_str(""), None);
     }
@@ -134,7 +118,7 @@ mod tests {
     #[test]
     fn hotkeys_cover_all_themes_uniquely() {
         let keys: Vec<char> = Theme::all().iter().map(|t| t.hotkey()).collect();
-        assert_eq!(keys.len(), 3);
+        assert_eq!(keys.len(), 2);
         for t in Theme::all() {
             assert_eq!(Theme::from_hotkey(t.hotkey()), Some(t));
         }
@@ -146,20 +130,6 @@ mod tests {
         assert_eq!(Theme::Modern.style().face.glyph_h(), 7);
         assert_eq!(line_width_of(Theme::Modern, 8), 8 * 10 + 7 * 2);
         assert_eq!(line_width_of(Theme::Classic, 8), 8 * 5 + 7);
-        assert_eq!(line_width_of(Theme::Compact, 8), 8 * 3 + 7);
-        // Compact is actually narrower than the old look.
-        assert!(line_width_of(Theme::Compact, 8) < line_width_of(Theme::Classic, 8));
-    }
-
-    #[test]
-    fn compact_palette_is_green_monochrome() {
-        use crossterm::style::Color;
-        assert_eq!(Theme::Compact.hours_minutes(), Color::Green);
-        assert_eq!(Theme::Compact.seconds(), Color::DarkGreen);
-        assert_ne!(
-            Theme::Compact.hours_minutes(),
-            Theme::Compact.seconds()
-        );
     }
 
     #[test]

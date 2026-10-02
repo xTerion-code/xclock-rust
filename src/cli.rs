@@ -58,7 +58,7 @@ pub fn usage() -> String {
            --list-themes       list available themes\n  \
            -h, --help          show this help\n\
          \n\
-         Live keys: 1/2/3 switch theme, q or Esc quits.",
+         Live keys: 1/2 switch theme, q or Esc quits.",
         theme_ids()
     )
 }
@@ -68,7 +68,7 @@ pub fn themes_list() -> String {
     for t in Theme::all() {
         out.push_str(&format!("  {:<8} {}\n", t.id(), t.description()));
     }
-    out.push_str("\nLive keys: press 1/2/3 to switch, q or Esc to quit.");
+    out.push_str("\nLive keys: press 1/2 to switch, q or Esc to quit.");
     out
 }
 
@@ -94,9 +94,9 @@ mod tests {
 
     #[test]
     fn accepts_long_short_and_eq_forms() {
-        assert_eq!(run_theme(&["xclock", "--theme", "compact"]), Theme::Compact);
+        assert_eq!(run_theme(&["xclock", "--theme", "classic"]), Theme::Classic);
         assert_eq!(run_theme(&["xclock", "-t", "classic"]), Theme::Classic);
-        assert_eq!(run_theme(&["xclock", "--theme=compact"]), Theme::Compact);
+        assert_eq!(run_theme(&["xclock", "--theme=classic"]), Theme::Classic);
     }
 
     #[test]

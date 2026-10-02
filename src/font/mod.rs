@@ -3,23 +3,15 @@
 pub enum Face {
     /// Large 5×7 block digits (`█`, `▮`).
     Block,
-    /// Compact 3×3 plain-ASCII digits (`_`, `|`, `.`).
-    Compact,
 }
 
 impl Face {
     pub fn glyph_h(self) -> usize {
-        match self {
-            Face::Block => 7,
-            Face::Compact => 3,
-        }
+        7
     }
 
     pub fn glyph_w(self) -> usize {
-        match self {
-            Face::Block => 5,
-            Face::Compact => 3,
-        }
+        5
     }
 }
 
@@ -33,9 +25,7 @@ pub struct Style {
 }
 
 mod block;
-mod compact;
 mod render;
 
 pub use block::block_glyph;
-pub use compact::compact_glyph;
 pub use render::{line_width, render_big};

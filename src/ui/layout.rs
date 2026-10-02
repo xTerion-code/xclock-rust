@@ -1,7 +1,7 @@
 use crate::theme::Theme;
 
-/// Live-key hint shown inside the frame (fits even the compact width).
-pub const HINT: &str = "1/2/3 theme · q quit";
+/// Live-key hint shown inside the frame (short enough for narrow terminals).
+pub const HINT: &str = "1/2 theme · q quit";
 
 /// Geometry of the centered block (frame + clock + date + hint).
 pub struct Layout {
@@ -73,9 +73,9 @@ mod tests {
             Theme::Modern.style().face.glyph_h() + 7
         );
         assert_eq!(
-            block_height(Theme::Compact),
-            Theme::Compact.style().face.glyph_h() + 7
+            block_height(Theme::Classic),
+            Theme::Classic.style().face.glyph_h() + 7
         );
-        assert!(block_height(Theme::Compact) < block_height(Theme::Modern));
+        assert_eq!(block_height(Theme::Modern), block_height(Theme::Classic));
     }
 }
