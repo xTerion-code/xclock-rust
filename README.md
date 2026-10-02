@@ -4,10 +4,12 @@ Terminal clock in Rust: large block digit face, date with weekday, frame and bli
 
 ## Features
 
-- Large ASCII digits 5×7, rendered double-width (10 cols) to match terminal cell aspect
+- Three themes: `modern` (current large double-width block digits),
+  `classic` (old single-width block digits), `compact` (tiny 3×3 plain-ASCII digits)
 - `HH:MM:SS` time format, colon blinking at 1 Hz
 - Date under the clock: `September 30, 2026 · Wednesday`
 - Colors: `HH:MM` in bold white, seconds in cyan, frame and separators dimmed
+  (`compact` uses a green phosphor palette instead)
 - Rounded frame `╭─╮│╰─╯` around the clock and date block
 - Alternate screen: the terminal is restored on exit
 - `Ctrl+C` exit with cursor and screen restored
@@ -25,9 +27,20 @@ cd xclock-rust
 cargo run --release
 ```
 
-Exit: `Ctrl+C`.
+With a theme:
 
-## Example
+```bash
+cargo run --release -- --theme compact
+cargo run --release -- -t classic
+```
+
+Available themes (`--list-themes`): `modern`, `classic`, `compact`.
+
+Exit: `Ctrl+C` or `q`/`Esc`. Switch theme live with `1` / `2` / `3`.
+
+## Examples
+
+`modern` (default):
 
 ```text
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -41,8 +54,24 @@ Exit: `Ctrl+C`.
 │    ██████████  ██████████              ██████████          ██              ██████████  ██████████    │
 │                                                                                                      │
 │                                    September 30, 2026 · Wednesday                                    │
+│                                         1/2/3 theme · q quit                                         │
 │                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+`compact` (`--theme compact`):
+
+```text
+╭───────────────────────────────────────╮
+│                                       │
+│         _   .   _       .   _   _     │
+│      |  _|      _| |_|     |_  |_     │
+│      | |_   .   _|   |  .   _| |_|    │
+│                                       │
+│    September 30, 2026 · Wednesday     │
+│         1/2/3 theme · q quit          │
+│                                       │
+╰───────────────────────────────────────╯
 ```
 
 Rendering depends on the terminal font; glyphs are `█` and `▮`.
@@ -51,11 +80,12 @@ Rendering depends on the terminal font; glyphs are `█` and `▮`.
 
 ```text
 src/
-  main.rs    — module wiring, calls app::run()
-  app.rs     — application loop, terminal guard, Ctrl+C, redraw on change
-  font.rs    — typeface: GLYPH_H/W, glyph(), render_big(), line_width()
+  main.rs    — module wiring, CLI dispatch, calls app::run(theme)
+  cli.rs     — argument parsing: --theme/-t, --list-themes, --help
+  app.rs     — application loop, terminal guard, raw-mode keys, Ctrl+C, redraw on change
+  font.rs    — typefaces: Face/Style, block_glyph(), compact_glyph(), render_big(), line_width()
   locale.rs  — date: weekday_name(), month_name(), format_date()
-  theme.rs   — colors: BORDER/SEPARATOR/DATE, time_char_color()
+  theme.rs   — themes: Theme (modern/classic/compact), palettes, style(), time_color()
   ui.rs      — geometry and drawing: Layout, compute_layout(), render()
 ```
 
@@ -74,7 +104,7 @@ cargo test
 cargo clippy --all-targets
 ```
 
-Verified: `cargo build`, `cargo test` (12 tests) and `cargo clippy --all-targets` with no warnings.
+Verified: `cargo build`, `cargo test` (23 tests) and `cargo clippy --all-targets` with no warnings.
 
 ## Dependencies
 
