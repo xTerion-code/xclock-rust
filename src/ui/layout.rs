@@ -1,6 +1,6 @@
 use crate::theme::Theme;
 
-pub const HINT: &str = "1/2 theme · q quit";
+pub const HINT: &str = "1/2 theme · s seconds · q quit";
 
 pub struct Layout {
     pub pad_x: usize,
@@ -45,14 +45,16 @@ mod tests {
 
     #[test]
     fn centers_block_on_roomy_screen() {
+        let hint_w = HINT.chars().count();
+        let expected_inner = 20.max(hint_w) + 8;
         let l = compute_layout(100, 40, 20, 10, modern());
-        assert_eq!(l.inner_w, 28);
-        assert_eq!(l.pad_x, (100 - 30) / 2);
+        assert_eq!(l.inner_w, expected_inner);
+        assert_eq!(l.pad_x, (100 - (expected_inner + 2)) / 2);
         assert_eq!(
             l.pad_y,
             (40 - (modern().style().face.glyph_h() + 7)) / 2
         );
-        assert_eq!(l.clock_offset, (28 - 20) / 2);
+        assert_eq!(l.clock_offset, (expected_inner - 20) / 2);
     }
 
     #[test]

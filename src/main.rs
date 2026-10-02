@@ -1,5 +1,6 @@
 mod app;
 mod cli;
+mod display;
 mod font;
 mod locale;
 mod terminal;
@@ -11,8 +12,8 @@ fn main() {
     match cli::parse(&args) {
         Ok(cli::Action::Help) => println!("{}", cli::usage()),
         Ok(cli::Action::ListThemes) => println!("{}", cli::themes_list()),
-        Ok(cli::Action::Run(theme)) => {
-            if let Err(e) = app::run(theme) {
+        Ok(cli::Action::Run(config)) => {
+            if let Err(e) = app::run(config.theme, config.display) {
                 eprintln!("xclock: {e}");
                 std::process::exit(1);
             }

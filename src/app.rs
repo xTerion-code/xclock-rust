@@ -10,13 +10,14 @@ use crossterm::{
     queue, terminal,
 };
 
+use crate::display::{DisplayOptions, format_time};
 use crate::font::{line_width, render_big};
 use crate::locale::format_date;
 use crate::terminal::TerminalGuard;
 use crate::theme::Theme;
 use crate::ui;
 
-pub fn run(initial_theme: Theme) -> io::Result<()> {
+pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<()> {
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
     let _ = ctrlc::set_handler(move || {
@@ -26,10 +27,11 @@ pub fn run(initial_theme: Theme) -> io::Result<()> {
     let _guard = TerminalGuard::enter()?;
     let mut stdout = BufWriter::new(io::stdout());
     let mut theme = initial_theme;
+    let mut display = initial_display;
 
     // Last drawn frame: skip redraws when nothing visible changed
     // (blink ticks at 2 Hz, time at 1 Hz, but we poll at ~10 Hz).
-    let mut last_key: Option<(String, bool, u16, u16, Theme)> = None;
+    let mut last_key: Option<(String, bool, u16, u16, Theme, bool)> = None;
 
     while running.load(Ordering::SeqCst) {
         // 100 ms poll doubles as the frame timer.
@@ -49,6 +51,9 @@ pub fn run(initial_theme: Theme) -> io::Result<()> {
                     {
                         theme = t;
                         last_key = None;
+                    } else if c == 's' || c == 'S' {
+                        display.toggle();
+                        last_key = None;
                     }
                 }
                 _ => {}
@@ -57,10 +62,17 @@ pub fn run(initial_theme: Theme) -> io::Result<()> {
 
         let now = Local::now();
         let colon_visible = now.timestamp_subsec_millis() < 500;
-        let time = now.format("%H:%M:%S").to_string();
+        let time = format_time(&now, display);
         let (cols, lines) = terminal::size().unwrap_or((80, 24));
 
-        let key = (time.clone(), colon_visible, cols, lines, theme);
+        let key = (
+            time.clone(),
+            colon_visible,
+            cols,
+            lines,
+            theme,
+            display.show_seconds,
+        );
         if last_key.as_ref() == Some(&key) {
             continue;
         }
