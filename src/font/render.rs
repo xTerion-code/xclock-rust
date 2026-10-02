@@ -1,7 +1,5 @@
 use super::{Style, block_glyph};
 
-/// Time string → glyph rows. Each glyph column is repeated `scale_x`
-/// times; glyphs are separated by `gap_x` spaces.
 pub fn render_big(time: &str, colon_visible: bool, style: Style) -> Vec<String> {
     let chars: Vec<char> = time.chars().collect();
     let width = line_width(chars.len(), style);
@@ -27,7 +25,6 @@ pub fn render_big(time: &str, colon_visible: bool, style: Style) -> Vec<String> 
     rows
 }
 
-/// Width of a rendered line of `n_chars` characters in `style`.
 pub fn line_width(n_chars: usize, style: Style) -> usize {
     let rendered_w = style.face.glyph_w() * style.scale_x;
     n_chars * rendered_w + n_chars.saturating_sub(1) * style.gap_x
@@ -73,7 +70,6 @@ mod tests {
                 assert_eq!(a.chars().count(), b.chars().count());
             }
         }
-        // Hidden colon rows are blank where the dots were.
         assert!(render_big(":", false, BLOCK_STYLE)[2].trim().is_empty());
     }
 

@@ -48,7 +48,7 @@ pub fn run(initial_theme: Theme) -> io::Result<()> {
                         && t != theme
                     {
                         theme = t;
-                        last_key = None; // force immediate redraw
+                        last_key = None;
                     }
                 }
                 _ => {}
@@ -56,7 +56,6 @@ pub fn run(initial_theme: Theme) -> io::Result<()> {
         }
 
         let now = Local::now();
-        // Colon blink at 1 Hz
         let colon_visible = now.timestamp_subsec_millis() < 500;
         let time = now.format("%H:%M:%S").to_string();
         let (cols, lines) = terminal::size().unwrap_or((80, 24));

@@ -1,16 +1,11 @@
 use crate::theme::Theme;
 
-/// What the program should do after parsing CLI arguments.
 pub enum Action {
     Run(Theme),
     Help,
     ListThemes,
 }
 
-/// `xclock [--theme <name> | -t <name>] [--list-themes] [--help]`.
-///
-/// Theme defaults to [`Theme::Modern`]. Errors are human-readable
-/// strings; `main` prints them with usage and exits with code 2.
 pub fn parse(args: &[String]) -> Result<Action, String> {
     let mut theme = Theme::Modern;
 

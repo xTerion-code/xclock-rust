@@ -25,8 +25,7 @@ const MONTHS: [&str; 12] = [
     "December",
 ];
 
-pub fn weekday_name(weekday: Weekday) -> &'static str {
-    WEEKDAYS[weekday.num_days_from_monday() as usize]
+pub fn weekday_name(weekday: Weekday) -> &'static str {    WEEKDAYS[weekday.num_days_from_monday() as usize]
 }
 
 pub fn month_name(month: u32) -> &'static str {
@@ -37,7 +36,6 @@ pub fn month_name(month: u32) -> &'static str {
         .unwrap_or("")
 }
 
-/// "September 30, 2026 · Wednesday"
 pub fn format_date(now: &DateTime<Local>) -> String {
     format!(
         "{} {}, {} · {}",
@@ -80,7 +78,6 @@ mod tests {
 
     #[test]
     fn formats_known_date() {
-        // 2026-09-30 is a Wednesday.
         let dt = Local.with_ymd_and_hms(2026, 9, 30, 12, 0, 0).unwrap();
         assert_eq!(format_date(&dt), "September 30, 2026 · Wednesday");
     }

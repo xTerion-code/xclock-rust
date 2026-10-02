@@ -2,15 +2,11 @@ use crossterm::style::Color;
 
 use crate::font::{Face, Style};
 
-/// First char index of the seconds part in "HH:MM:SS".
 pub const SECONDS_START: usize = 5;
 
-/// Selectable clock theme: typeface rendering + color palette.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Theme {
-    /// Current look: large double-width block digits, white/cyan.
     Modern,
-    /// Old look: original single-width block digits, white/cyan.
     Classic,
 }
 
@@ -19,7 +15,6 @@ impl Theme {
         [Theme::Modern, Theme::Classic]
     }
 
-    /// CLI id: `--theme <id>`.
     pub fn id(self) -> &'static str {
         match self {
             Theme::Modern => "modern",
@@ -27,7 +22,6 @@ impl Theme {
         }
     }
 
-    /// Short human-readable description for `--list-themes`.
     pub fn description(self) -> &'static str {
         match self {
             Theme::Modern => "current: large double-width block digits",
@@ -35,7 +29,6 @@ impl Theme {
         }
     }
 
-    /// Key (`1`/`2`) that selects this theme live.
     pub fn hotkey(self) -> char {
         match self {
             Theme::Modern => '1',
@@ -47,7 +40,6 @@ impl Theme {
         Theme::all().into_iter().find(|t| t.hotkey() == key)
     }
 
-    /// Case-insensitive CLI parsing.
     pub fn from_str(s: &str) -> Option<Theme> {
         let lower = s.to_lowercase();
         Theme::all()
@@ -55,7 +47,6 @@ impl Theme {
             .find(|t| t.id() == lower)
     }
 
-    /// Rendering parameters for this theme.
     pub fn style(self) -> Style {
         match self {
             Theme::Modern => Style {
@@ -91,8 +82,6 @@ impl Theme {
         Color::Cyan
     }
 
-    /// "HH:MM:SS" -> chars before `SECONDS_START` in the main color,
-    /// the second colon and seconds in the accent color.
     pub fn time_color(self, index: usize) -> Color {
         if index < SECONDS_START {
             self.hours_minutes()

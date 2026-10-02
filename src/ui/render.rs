@@ -111,8 +111,6 @@ fn write_clock_rows(
     Ok(())
 }
 
-/// Centered single line in `color`, truncated (never wrapped)
-/// on narrow terminals.
 fn write_centered(
     stdout: &mut impl Write,
     layout: &Layout,
@@ -137,8 +135,6 @@ fn write_centered(
     Ok(())
 }
 
-/// Full frame: vertical offset + frame with clock, date and key hint.
-/// Callers flush once after `render` for a tear-free frame.
 pub fn render(
     stdout: &mut impl Write,
     layout: &Layout,

@@ -1,5 +1,3 @@
-/// One character in the large block font.
-/// `colon_visible` controls colon blinking.
 pub fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
     match ch {
         '0' => [

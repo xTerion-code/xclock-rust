@@ -1,7 +1,5 @@
-/// Available typefaces.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Face {
-    /// Large 5×7 block digits (`█`, `▮`).
     Block,
 }
 
@@ -15,8 +13,6 @@ impl Face {
     }
 }
 
-/// How a face is rasterized: which typeface, horizontal pixel doubling
-/// (terminal cells are ~2x taller than wide) and inter-glyph gap.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Style {
     pub face: Face,
