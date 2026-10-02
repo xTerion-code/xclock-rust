@@ -5,7 +5,7 @@ use crossterm::{
     style::{Attribute, ResetColor, SetAttribute, SetForegroundColor},
 };
 
-use crate::font::{GLYPH_H, GLYPH_W, line_width};
+use crate::font::{GAP_X, GLYPH_H, RENDERED_W, line_width};
 use crate::theme;
 
 /// Geometry of the centered block (frame + clock + date).
@@ -92,16 +92,18 @@ fn write_clock_rows(
                 stdout,
                 SetForegroundColor(theme::time_char_color(i))
             )?;
-            for k in 0..GLYPH_W {
+            for k in 0..RENDERED_W {
                 let c = row.get(col + k).copied().unwrap_or(' ');
                 write!(stdout, "{c}")?;
             }
-            col += GLYPH_W;
+            col += RENDERED_W;
             if i + 1 < time_chars.len() {
                 execute!(stdout, SetForegroundColor(theme::SEPARATOR))?;
-                let c = row.get(col).copied().unwrap_or(' ');
-                write!(stdout, "{c}")?;
-                col += 1;
+                for _ in 0..GAP_X {
+                    let c = row.get(col).copied().unwrap_or(' ');
+                    write!(stdout, "{c}")?;
+                    col += 1;
+                }
             }
         }
 

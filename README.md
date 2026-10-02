@@ -4,7 +4,7 @@ Terminal clock in Rust: large block digit face, date with weekday, frame and bli
 
 ## Features
 
-- Large ASCII digits 7×5, centered to the terminal size
+- Large ASCII digits 5×7, rendered double-width (10 cols) to match terminal cell aspect
 - `HH:MM:SS` time format, colon blinking at 1 Hz
 - Date under the clock: `September 30, 2026 · Tuesday`
 - Colors: `HH:MM` in bold white, seconds in cyan, frame and separators dimmed
