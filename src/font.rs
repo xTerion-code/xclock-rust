@@ -162,7 +162,7 @@ pub fn compact_glyph(ch: char, colon_visible: bool) -> [&'static str; 3] {
         '7' => [" _ ", "  |", "  |"],
         '8' => [" _ ", "|_|", "|_|"],
         '9' => [" _ ", "|_|", " _|"],
-        ':' if colon_visible => [" . ", "   ", " . "],
+        ':' if colon_visible => ["   ", " . ", " . "],
         _ => ["   ", "   ", "   "],
     }
 }
@@ -268,6 +268,14 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn compact_colon_dots_stay_off_the_top_row() {
+        // Dots share the top row with `_` segments there, which reads as
+        // noise; mid+bottom rows sit in the whitespace between glyphs.
+        assert_eq!(compact_glyph(':', true), ["   ", " . ", " . "]);
+        assert_eq!(compact_glyph(':', false), ["   ", "   ", "   "]);
     }
 
     #[test]

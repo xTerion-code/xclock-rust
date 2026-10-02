@@ -152,6 +152,17 @@ mod tests {
     }
 
     #[test]
+    fn compact_palette_is_green_monochrome() {
+        use crossterm::style::Color;
+        assert_eq!(Theme::Compact.hours_minutes(), Color::Green);
+        assert_eq!(Theme::Compact.seconds(), Color::DarkGreen);
+        assert_ne!(
+            Theme::Compact.hours_minutes(),
+            Theme::Compact.seconds()
+        );
+    }
+
+    #[test]
     fn splits_hours_minutes_from_seconds() {
         for theme in Theme::all() {
             for i in 0..SECONDS_START {

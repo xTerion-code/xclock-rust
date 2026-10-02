@@ -64,8 +64,8 @@ Exit: `Ctrl+C` or `q`/`Esc`. Switch theme live with `1` / `2` / `3`.
 ```text
 ╭───────────────────────────────────────╮
 │                                       │
-│         _   .   _       .   _   _     │
-│      |  _|      _| |_|     |_  |_     │
+│         _       _           _   _     │
+│      |  _|  .   _| |_|  .  |_  |_     │
 │      | |_   .   _|   |  .   _| |_|    │
 │                                       │
 │    September 30, 2026 · Wednesday     │
@@ -104,7 +104,7 @@ cargo test
 cargo clippy --all-targets
 ```
 
-Verified: `cargo build`, `cargo test` (23 tests) and `cargo clippy --all-targets` with no warnings.
+Verified: `cargo build`, `cargo test` (25 tests) and `cargo clippy --all-targets` with no warnings.
 
 ## Dependencies
 
