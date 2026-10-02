@@ -6,7 +6,7 @@ Terminal clock in Rust: large block digit face, date with weekday, frame and bli
 
 - Large ASCII digits 5×7, rendered double-width (10 cols) to match terminal cell aspect
 - `HH:MM:SS` time format, colon blinking at 1 Hz
-- Date under the clock: `September 30, 2026 · Tuesday`
+- Date under the clock: `September 30, 2026 · Wednesday`
 - Colors: `HH:MM` in bold white, seconds in cyan, frame and separators dimmed
 - Rounded frame `╭─╮│╰─╯` around the clock and date block
 - Alternate screen: the terminal is restored on exit
@@ -30,19 +30,19 @@ Exit: `Ctrl+C`.
 ## Example
 
 ```text
-╭───────────────────────────────────────────────────────╮
-│                                                       │
-│    ███  █   █ █████ █   █ █████       ████ █████       │
-│   █   █ █   █     █ █   █ █               █ █   █      │
-│   █   █ █   █     █ █   █ █        ▮      █ █   █      │
-│   █   █ █████  ████ █████ ████            █ █████      │
-│   █   █     █     █     █     █                   │
-│   █   █     █     █     █     █        ▮      █     █  │
-│    ███      █ █████     █ █████           █ █████      │
-│                                                       │
-│              September 30, 2026 · Tuesday             │
-│                                                       │
-╰───────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                      │
+│        ██      ██████████              ██████████  ██      ██              ██████████  ██████████    │
+│      ████              ██                      ██  ██      ██              ██          ██            │
+│        ██              ██      ▮▮              ██  ██      ██      ▮▮      ██          ██            │
+│        ██      ██████████                ████████  ██████████              ██████████  ██████████    │
+│        ██      ██                              ██          ██                      ██  ██      ██    │
+│        ██      ██              ▮▮              ██          ██      ▮▮              ██  ██      ██    │
+│    ██████████  ██████████              ██████████          ██              ██████████  ██████████    │
+│                                                                                                      │
+│                                    September 30, 2026 · Wednesday                                    │
+│                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Rendering depends on the terminal font; glyphs are `█` and `▮`.
@@ -52,7 +52,7 @@ Rendering depends on the terminal font; glyphs are `█` and `▮`.
 ```text
 src/
   main.rs    — module wiring, calls app::run()
-  app.rs     — application loop, terminal, Ctrl+C, 100 ms frame
+  app.rs     — application loop, terminal guard, Ctrl+C, redraw on change
   font.rs    — typeface: GLYPH_H/W, glyph(), render_big(), line_width()
   locale.rs  — date: weekday_name(), month_name(), format_date()
   theme.rs   — colors: BORDER/SEPARATOR/DATE, time_char_color()
@@ -70,10 +70,11 @@ Extension points:
 
 ```bash
 cargo build
+cargo test
 cargo clippy --all-targets
 ```
 
-Verified: `cargo build` and `cargo clippy --all-targets` with no warnings.
+Verified: `cargo build`, `cargo test` (12 tests) and `cargo clippy --all-targets` with no warnings.
 
 ## Dependencies
 
