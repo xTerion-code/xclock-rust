@@ -4,6 +4,7 @@ use super::hour_format::HourFormat;
 pub struct DisplayOptions {
     pub show_seconds: bool,
     pub hour_format: HourFormat,
+    pub blink_colon: bool,
 }
 
 impl DisplayOptions {
@@ -11,6 +12,7 @@ impl DisplayOptions {
         Self {
             show_seconds,
             hour_format: HourFormat::default(),
+            blink_colon: true,
         }
     }
 
@@ -18,6 +20,7 @@ impl DisplayOptions {
         Self {
             show_seconds,
             hour_format,
+            blink_colon: true,
         }
     }
 
@@ -27,6 +30,10 @@ impl DisplayOptions {
 
     pub fn toggle_hour_format(&mut self) {
         self.hour_format = self.hour_format.toggle();
+    }
+
+    pub fn toggle_blink(&mut self) {
+        self.blink_colon = !self.blink_colon;
     }
 }
 
@@ -62,5 +69,15 @@ mod tests {
         assert_eq!(o.hour_format, crate::display::HourFormat::H12);
         o.toggle_hour_format();
         assert_eq!(o.hour_format, crate::display::HourFormat::H24);
+    }
+
+    #[test]
+    fn blink_defaults_on_and_toggles() {
+        let mut o = DisplayOptions::default();
+        assert!(o.blink_colon);
+        o.toggle_blink();
+        assert!(!o.blink_colon);
+        o.toggle_blink();
+        assert!(o.blink_colon);
     }
 }

@@ -16,6 +16,7 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
     let mut theme = Theme::Modern;
     let mut show_seconds = true;
     let mut hour_format = HourFormat::default();
+    let mut blink_colon = true;
 
     let mut it = args.iter().skip(1).peekable();
     while let Some(arg) = it.next() {
@@ -29,6 +30,10 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
             show_seconds = true;
         } else if arg == "--no-seconds" || arg == "--hide-seconds" {
             show_seconds = false;
+        } else if arg == "--blink" {
+            blink_colon = true;
+        } else if arg == "--no-blink" {
+            blink_colon = false;
         } else if arg == "--12h" {
             hour_format = HourFormat::H12;
         } else if arg == "--24h" {
@@ -60,7 +65,8 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
         }
     }
 
-    let display = DisplayOptions::with_hour_format(show_seconds, hour_format);
+    let mut display = DisplayOptions::with_hour_format(show_seconds, hour_format);
+    display.blink_colon = blink_colon;
     Ok(Action::Run(Config { theme, display }))
 }
 
@@ -74,7 +80,7 @@ fn theme_ids() -> String {
 
 pub fn usage() -> String {
     format!(
-        "Usage: xclock [--theme <name> | -t <name>] [--show-seconds | --no-seconds] [--12h | --24h] [--list-themes] [--help]\n\
+        "Usage: xclock [--theme <name> | -t <name>] [--show-seconds | --no-seconds] [--12h | --24h] [--blink | --no-blink] [--list-themes] [--help]\n\
          \n\
          Options:\n  \
            -t, --theme <name>  clock theme (default: modern): {}\n  \
@@ -83,10 +89,12 @@ pub fn usage() -> String {
            --12h               use 12-hour format\n  \
            --24h               use 24-hour format (default)\n  \
            --hour-format <12|24>  same as --12h/--24h (last flag wins)\n  \
+           --blink             blink colon (default)\n  \
+           --no-blink          steady colon\n  \
            --list-themes       list available themes\n  \
            -h, --help          show this help\n\
          \n\
-         Live keys: 1/2 switch theme, s toggles seconds, h toggles 12/24h, q or Esc quits.",
+         Live keys: 1/2 switch theme, s toggles seconds, h toggles 12/24h, b toggles blink, q or Esc quits.",
         theme_ids()
     )
 }
@@ -96,7 +104,7 @@ pub fn themes_list() -> String {
     for t in Theme::all() {
         out.push_str(&format!("  {:<8} {}\n", t.id(), t.description()));
     }
-    out.push_str("\nLive keys: press 1/2 to switch, s to toggle seconds, h to toggle 12/24h, q or Esc to quit.");
+    out.push_str("\nLive keys: press 1/2 to switch, s to toggle seconds, h to toggle 12/24h, b to toggle blink, q or Esc to quit.");
     out
 }
 
@@ -169,6 +177,17 @@ mod tests {
         );
         assert!(parse(&args(&["xclock", "--hour-format", "13"])).is_err());
         assert!(parse(&args(&["xclock", "--hour-format"])).is_err());
+    }
+
+    #[test]
+    fn toggles_blink_from_cli_last_flag_wins() {
+        assert!(run_config(&["xclock"]).display.blink_colon);
+        assert!(!run_config(&["xclock", "--no-blink"]).display.blink_colon);
+        assert!(
+            run_config(&["xclock", "--no-blink", "--blink"])
+                .display
+                .blink_colon
+        );
     }
 
     #[test]

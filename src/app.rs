@@ -57,6 +57,9 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
                     } else if c == 'h' || c == 'H' {
                         display.toggle_hour_format();
                         last_key = None;
+                    } else if c == 'b' || c == 'B' {
+                        display.toggle_blink();
+                        last_key = None;
                     }
                 }
                 _ => {}
@@ -64,7 +67,7 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
         }
 
         let now = Local::now();
-        let colon_visible = now.timestamp_subsec_millis() < 500;
+        let colon_visible = !display.blink_colon || now.timestamp_subsec_millis() < 500;
         let time = format_time(&now, display);
         let (cols, lines) = terminal::size().unwrap_or((80, 24));
 
