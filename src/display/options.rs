@@ -5,6 +5,7 @@ pub struct DisplayOptions {
     pub show_seconds: bool,
     pub hour_format: HourFormat,
     pub blink_colon: bool,
+    pub show_date: bool,
 }
 
 impl DisplayOptions {
@@ -13,6 +14,7 @@ impl DisplayOptions {
             show_seconds,
             hour_format: HourFormat::default(),
             blink_colon: true,
+            show_date: true,
         }
     }
 
@@ -21,6 +23,7 @@ impl DisplayOptions {
             show_seconds,
             hour_format,
             blink_colon: true,
+            show_date: true,
         }
     }
 
@@ -34,6 +37,10 @@ impl DisplayOptions {
 
     pub fn toggle_blink(&mut self) {
         self.blink_colon = !self.blink_colon;
+    }
+
+    pub fn toggle_date(&mut self) {
+        self.show_date = !self.show_date;
     }
 }
 
@@ -79,5 +86,15 @@ mod tests {
         assert!(!o.blink_colon);
         o.toggle_blink();
         assert!(o.blink_colon);
+    }
+
+    #[test]
+    fn date_defaults_shown_and_toggles() {
+        let mut o = DisplayOptions::default();
+        assert!(o.show_date);
+        o.toggle_date();
+        assert!(!o.show_date);
+        o.toggle_date();
+        assert!(o.show_date);
     }
 }

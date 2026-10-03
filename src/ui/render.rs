@@ -140,7 +140,7 @@ pub fn render(
     layout: &Layout,
     rows: &[String],
     time_chars: &[char],
-    date_line: &str,
+    date_line: Option<&str>,
     theme: Theme,
 ) -> io::Result<()> {
     let style = theme.style();
@@ -152,7 +152,9 @@ pub fn render(
     write_empty(stdout, theme, layout.pad_x, layout.inner_w)?;
     write_clock_rows(stdout, layout, rows, time_chars, theme, style)?;
     write_empty(stdout, theme, layout.pad_x, layout.inner_w)?;
-    write_centered(stdout, layout, date_line, theme, theme.date())?;
+    if let Some(date) = date_line {
+        write_centered(stdout, layout, date, theme, theme.date())?;
+    }
     write_centered(stdout, layout, HINT, theme, theme.separator())?;
     write_empty(stdout, theme, layout.pad_x, layout.inner_w)?;
     write_bottom(stdout, theme, layout.pad_x, layout.inner_w)?;
@@ -181,15 +183,37 @@ mod tests {
                 crate::font::line_width(time_chars.len(), style),
                 date.chars().count(),
                 theme,
+                true,
             );
             let mut buf: Vec<u8> = Vec::new();
-            render(&mut buf, &l, &rows, &time_chars, date, theme).unwrap();
+            render(&mut buf, &l, &rows, &time_chars, Some(date), theme).unwrap();
             let out = String::from_utf8(buf).unwrap();
             assert!(out.contains('╭') && out.contains('╯'), "frame missing");
             assert!(out.contains(date), "date missing");
             assert!(out.contains(HINT), "hint missing");
             assert!(out.contains(&"─".repeat(l.inner_w)), "top width wrong");
         }
+    }
+
+    #[test]
+    fn render_without_date_omits_date_row() {
+        let style = modern().style();
+        let rows = crate::font::render_big("12:34:56", true, style);
+        let time_chars: Vec<char> = "12:34:56".chars().collect();
+        let date = "September 30, 2026 · Wednesday";
+        let l = crate::ui::compute_layout(
+            140,
+            40,
+            crate::font::line_width(time_chars.len(), style),
+            date.chars().count(),
+            modern(),
+            false,
+        );
+        let mut buf: Vec<u8> = Vec::new();
+        render(&mut buf, &l, &rows, &time_chars, None, modern()).unwrap();
+        let out = String::from_utf8(buf).unwrap();
+        assert!(!out.contains(date), "date should be hidden");
+        assert!(out.contains(HINT), "hint missing");
     }
 
     #[test]
@@ -203,6 +227,7 @@ mod tests {
             crate::font::line_width(8, style),
             27,
             modern(),
+            true,
         );
         let mut buf: Vec<u8> = Vec::new();
         render(
@@ -210,7 +235,7 @@ mod tests {
             &l,
             &rows,
             &time_chars,
-            "September 30, 2026 · Wednesday",
+            Some("September 30, 2026 · Wednesday"),
             modern(),
         )
         .unwrap();

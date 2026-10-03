@@ -60,6 +60,9 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
                     } else if c == 'b' || c == 'B' {
                         display.toggle_blink();
                         last_key = None;
+                    } else if c == 'd' || c == 'D' {
+                        display.toggle_date();
+                        last_key = None;
                     }
                 }
                 _ => {}
@@ -99,6 +102,7 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
             line_width(time_chars.len(), style),
             date_line.chars().count(),
             theme,
+            display.show_date,
         );
 
         // Queued (not executed one-by-one): a single flush per frame,
@@ -108,7 +112,14 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
             terminal::Clear(terminal::ClearType::All),
             cursor::MoveTo(0, 0)
         )?;
-        ui::render(&mut stdout, &layout, &rows, &time_chars, &date_line, theme)?;
+        ui::render(
+            &mut stdout,
+            &layout,
+            &rows,
+            &time_chars,
+            display.show_date.then_some(date_line.as_str()),
+            theme,
+        )?;
         stdout.flush()?;
     }
 

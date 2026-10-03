@@ -17,6 +17,7 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
     let mut show_seconds = true;
     let mut hour_format = HourFormat::default();
     let mut blink_colon = true;
+    let mut show_date = true;
 
     let mut it = args.iter().skip(1).peekable();
     while let Some(arg) = it.next() {
@@ -34,6 +35,10 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
             blink_colon = true;
         } else if arg == "--no-blink" {
             blink_colon = false;
+        } else if arg == "--show-date" {
+            show_date = true;
+        } else if arg == "--no-date" || arg == "--hide-date" {
+            show_date = false;
         } else if arg == "--12h" {
             hour_format = HourFormat::H12;
         } else if arg == "--24h" {
@@ -67,6 +72,7 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
 
     let mut display = DisplayOptions::with_hour_format(show_seconds, hour_format);
     display.blink_colon = blink_colon;
+    display.show_date = show_date;
     Ok(Action::Run(Config { theme, display }))
 }
 
@@ -91,10 +97,12 @@ pub fn usage() -> String {
            --hour-format <12|24>  same as --12h/--24h (last flag wins)\n  \
            --blink             blink colon (default)\n  \
            --no-blink          steady colon\n  \
+           --show-date         show date (default)\n  \
+           --no-date           hide date\n  \
            --list-themes       list available themes\n  \
            -h, --help          show this help\n\
          \n\
-         Live keys: 1/2 switch theme, s toggles seconds, h toggles 12/24h, b toggles blink, q or Esc quits.",
+         Live keys: 1/2 switch theme, s toggles seconds, h toggles 12/24h, b toggles blink, d toggles date, q or Esc quits.",
         theme_ids()
     )
 }
@@ -104,7 +112,7 @@ pub fn themes_list() -> String {
     for t in Theme::all() {
         out.push_str(&format!("  {:<8} {}\n", t.id(), t.description()));
     }
-    out.push_str("\nLive keys: press 1/2 to switch, s to toggle seconds, h to toggle 12/24h, b to toggle blink, q or Esc to quit.");
+    out.push_str("\nLive keys: press 1/2 to switch, s to toggle seconds, h to toggle 12/24h, b to toggle blink, d to toggle date, q or Esc to quit.");
     out
 }
 
@@ -187,6 +195,18 @@ mod tests {
             run_config(&["xclock", "--no-blink", "--blink"])
                 .display
                 .blink_colon
+        );
+    }
+
+    #[test]
+    fn toggles_date_from_cli_last_flag_wins() {
+        assert!(run_config(&["xclock"]).display.show_date);
+        assert!(!run_config(&["xclock", "--no-date"]).display.show_date);
+        assert!(!run_config(&["xclock", "--hide-date"]).display.show_date);
+        assert!(
+            run_config(&["xclock", "--no-date", "--show-date"])
+                .display
+                .show_date
         );
     }
 
