@@ -25,7 +25,8 @@ const MONTHS: [&str; 12] = [
     "December",
 ];
 
-pub fn weekday_name(weekday: Weekday) -> &'static str {    WEEKDAYS[weekday.num_days_from_monday() as usize]
+pub fn weekday_name(weekday: Weekday) -> &'static str {
+    WEEKDAYS[weekday.num_days_from_monday() as usize]
 }
 
 pub fn month_name(month: u32) -> &'static str {

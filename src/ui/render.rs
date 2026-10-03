@@ -12,7 +12,12 @@ use crate::theme::Theme;
 // Note: `\r\n` endings everywhere — the app runs in raw mode,
 // where a bare `\n` does not return the carriage.
 
-fn write_top(stdout: &mut impl Write, theme: Theme, pad_x: usize, inner_w: usize) -> io::Result<()> {
+fn write_top(
+    stdout: &mut impl Write,
+    theme: Theme,
+    pad_x: usize,
+    inner_w: usize,
+) -> io::Result<()> {
     let pad = " ".repeat(pad_x);
     queue!(stdout, SetForegroundColor(theme.border()))?;
     write!(stdout, "{pad}╭{}╮\r\n", "─".repeat(inner_w))?;
@@ -58,10 +63,7 @@ fn write_clock_rows(
     theme: Theme,
     style: Style,
 ) -> io::Result<()> {
-    let row_chars: Vec<Vec<char>> = rows
-        .iter()
-        .map(|r| r.chars().collect())
-        .collect();
+    let row_chars: Vec<Vec<char>> = rows.iter().map(|r| r.chars().collect()).collect();
     let rendered_w = style.face.glyph_w() * style.scale_x;
 
     queue!(stdout, SetAttribute(Attribute::Bold))?;

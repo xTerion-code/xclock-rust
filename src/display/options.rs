@@ -10,12 +10,7 @@ pub struct DisplayOptions {
 
 impl DisplayOptions {
     pub fn new(show_seconds: bool) -> Self {
-        Self {
-            show_seconds,
-            hour_format: HourFormat::default(),
-            blink_colon: true,
-            show_date: true,
-        }
+        Self::with_hour_format(show_seconds, HourFormat::default())
     }
 
     pub fn with_hour_format(show_seconds: bool, hour_format: HourFormat) -> Self {

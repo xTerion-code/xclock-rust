@@ -52,10 +52,7 @@ mod tests {
         let l = compute_layout(100, 40, 20, 10, modern(), true);
         assert_eq!(l.inner_w, expected_inner);
         assert_eq!(l.pad_x, (100 - (expected_inner + 2)) / 2);
-        assert_eq!(
-            l.pad_y,
-            (40 - (modern().style().face.glyph_h() + 7)) / 2
-        );
+        assert_eq!(l.pad_y, (40 - (modern().style().face.glyph_h() + 7)) / 2);
         assert_eq!(l.clock_offset, (expected_inner - 20) / 2);
     }
 

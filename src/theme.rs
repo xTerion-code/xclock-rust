@@ -42,9 +42,7 @@ impl Theme {
 
     pub fn from_str(s: &str) -> Option<Theme> {
         let lower = s.to_lowercase();
-        Theme::all()
-            .into_iter()
-            .find(|t| t.id() == lower)
+        Theme::all().into_iter().find(|t| t.id() == lower)
     }
 
     pub fn style(self) -> Style {
@@ -62,6 +60,7 @@ impl Theme {
         }
     }
 
+    // Per-theme palette hook: both themes share these colors for now.
     pub fn border(self) -> Color {
         Color::DarkGrey
     }
@@ -112,6 +111,17 @@ mod tests {
             assert_eq!(Theme::from_hotkey(t.hotkey()), Some(t));
         }
         assert_eq!(Theme::from_hotkey('q'), None);
+        for reserved in ['s', 'h', 'b', 'd', 'q'] {
+            assert!(
+                Theme::from_hotkey(reserved).is_none(),
+                "theme hotkey collides with action key `{reserved}`"
+            );
+            assert!(
+                Theme::from_hotkey(reserved.to_ascii_uppercase()).is_none(),
+                "theme hotkey collides with action key `{}`",
+                reserved.to_ascii_uppercase()
+            );
+        }
     }
 
     #[test]

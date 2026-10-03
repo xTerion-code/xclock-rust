@@ -7,6 +7,8 @@ Terminal clock in Rust: large block digit face, date with weekday, frame and bli
 - Two themes: `modern` (current large double-width block digits),
   `classic` (old single-width block digits)
 - `HH:MM:SS` time format, colon blinking at 1 Hz
+- 12-hour format with `AM`/`PM` (`--12h`, live key `h`)
+- Steady colon (`--no-blink`, live key `b`), hidden date (`--no-date`, live key `d`)
 - Date under the clock: `September 30, 2026 · Wednesday`
 - Colors: `HH:MM` in bold white, seconds in cyan, frame and separators dimmed
 - Rounded frame `╭─╮│╰─╯` around the clock and date block
@@ -35,7 +37,7 @@ cargo run --release -- -t modern
 
 Available themes (`--list-themes`): `modern`, `classic`.
 
-Exit: `Ctrl+C` or `q`/`Esc`. Switch theme live with `1` / `2`.
+Exit: `Ctrl+C` or `q`/`Esc`. Live keys: `1`/`2` theme, `s` seconds, `h` 12/24h, `b` blink, `d` date.
 
 ## Examples
 
@@ -53,7 +55,7 @@ Exit: `Ctrl+C` or `q`/`Esc`. Switch theme live with `1` / `2`.
 │    ██████████  ██████████              ██████████          ██              ██████████  ██████████    │
 │                                                                                                      │
 │                                    September 30, 2026 · Wednesday                                    │
-│                                         1/2 theme · q quit                                           │
+│                     1/2 theme · s seconds · h 12/24h · b blink · d date · q quit                     │
 │                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -64,15 +66,19 @@ Rendering depends on the terminal font; glyphs are `█` and `▮`.
 
 ```text
 src/
-  main.rs       — module wiring, CLI dispatch, calls app::run(theme)
-  cli.rs        — argument parsing: --theme/-t, --list-themes, --help
+  main.rs       — module wiring, CLI dispatch, calls app::run(theme, display)
+  cli.rs        — argument parsing: --theme/-t, --show-seconds/--no-seconds,
+                  --12h/--24h/--hour-format, --blink/--no-blink,
+                  --show-date/--no-date, --list-themes, --help
   app.rs        — application loop, raw-mode keys, Ctrl+C, redraw on change
   terminal.rs   — terminal lifecycle: raw mode, alternate screen, cursor
+  display/      — options (DisplayOptions), hour format (HourFormat),
+                  format_time, format_meridiem
   font/         — typefaces: mod (Face/Style), block (block_glyph),
                   render (render_big, line_width)
   locale.rs     — date: weekday_name(), month_name(), format_date()
   theme.rs      — themes: Theme (modern/classic), palettes, style(), time_color()
-  ui/           — geometry and drawing: mod, layout (Layout, compute_layout),
+  ui/           — geometry and drawing: mod, layout (Layout, HINT, compute_layout),
                   render (render)
 ```
 
@@ -91,7 +97,7 @@ cargo test
 cargo clippy --all-targets
 ```
 
-Verified: `cargo build`, `cargo test` (21 tests) and `cargo clippy --all-targets` with no warnings.
+Verified: `cargo build`, `cargo test` (38 tests) and `cargo clippy --all-targets` with no warnings.
 
 ## Dependencies
 

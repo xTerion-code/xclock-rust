@@ -44,9 +44,9 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
         } else if arg == "--24h" {
             hour_format = HourFormat::H24;
         } else if arg == "-t" || arg == "--theme" {
-            let value = it.next().ok_or_else(|| {
-                format!("missing value: `{arg}` expects one of: {}", theme_ids())
-            })?;
+            let value = it
+                .next()
+                .ok_or_else(|| format!("missing value: `{arg}` expects one of: {}", theme_ids()))?;
             theme = Theme::from_str(value).ok_or_else(|| {
                 format!("unknown theme `{value}` (expected one of: {})", theme_ids())
             })?;
@@ -154,10 +154,16 @@ mod tests {
     fn toggles_seconds_from_cli() {
         assert!(run_config(&["xclock"]).display.show_seconds);
         assert!(!run_config(&["xclock", "--no-seconds"]).display.show_seconds);
-        assert!(!run_config(&["xclock", "--hide-seconds"]).display.show_seconds);
-        assert!(run_config(&["xclock", "--no-seconds", "--show-seconds"])
-            .display
-            .show_seconds);
+        assert!(
+            !run_config(&["xclock", "--hide-seconds"])
+                .display
+                .show_seconds
+        );
+        assert!(
+            run_config(&["xclock", "--no-seconds", "--show-seconds"])
+                .display
+                .show_seconds
+        );
     }
 
     #[test]
@@ -168,7 +174,9 @@ mod tests {
             HourFormat::H12
         );
         assert_eq!(
-            run_config(&["xclock", "--12h", "--24h"]).display.hour_format,
+            run_config(&["xclock", "--12h", "--24h"])
+                .display
+                .hour_format,
             HourFormat::H24
         );
         assert_eq!(
@@ -219,7 +227,10 @@ mod tests {
 
     #[test]
     fn help_and_list_actions() {
-        assert!(matches!(parse(&args(&["xclock", "--help"])), Ok(Action::Help)));
+        assert!(matches!(
+            parse(&args(&["xclock", "--help"])),
+            Ok(Action::Help)
+        ));
         assert!(matches!(parse(&args(&["xclock", "-h"])), Ok(Action::Help)));
         assert!(matches!(
             parse(&args(&["xclock", "--list-themes"])),

@@ -1,6 +1,6 @@
 use std::io::{self, BufWriter, Write};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use chrono::Local;
@@ -40,9 +40,7 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
         {
             match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => break,
-                KeyCode::Char('c')
-                    if key.modifiers.contains(KeyModifiers::CONTROL) =>
-                {
+                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     break;
                 }
                 KeyCode::Char(c) => {
@@ -74,14 +72,7 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
         let time = format_time(&now, display);
         let (cols, lines) = terminal::size().unwrap_or((80, 24));
 
-        let key = (
-            time.clone(),
-            colon_visible,
-            cols,
-            lines,
-            theme,
-            display,
-        );
+        let key = (time.clone(), colon_visible, cols, lines, theme, display);
         if last_key.as_ref() == Some(&key) {
             continue;
         }
