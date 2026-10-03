@@ -10,7 +10,7 @@ use crossterm::{
     queue, terminal,
 };
 
-use crate::display::{DisplayOptions, format_time};
+use crate::display::{DisplayOptions, format_meridiem, format_time};
 use crate::font::{line_width, render_big};
 use crate::locale::format_date;
 use crate::terminal::TerminalGuard;
@@ -31,7 +31,7 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
 
     // Last drawn frame: skip redraws when nothing visible changed
     // (blink ticks at 2 Hz, time at 1 Hz, but we poll at ~10 Hz).
-    let mut last_key: Option<(String, bool, u16, u16, Theme, bool)> = None;
+    let mut last_key: Option<(String, bool, u16, u16, Theme, DisplayOptions)> = None;
 
     while running.load(Ordering::SeqCst) {
         // 100 ms poll doubles as the frame timer.
@@ -52,7 +52,10 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
                         theme = t;
                         last_key = None;
                     } else if c == 's' || c == 'S' {
-                        display.toggle();
+                        display.toggle_seconds();
+                        last_key = None;
+                    } else if c == 'h' || c == 'H' {
+                        display.toggle_hour_format();
                         last_key = None;
                     }
                 }
@@ -71,7 +74,7 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
             cols,
             lines,
             theme,
-            display.show_seconds,
+            display,
         );
         if last_key.as_ref() == Some(&key) {
             continue;
@@ -81,7 +84,11 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
         let style = theme.style();
         let time_chars: Vec<char> = time.chars().collect();
         let rows = render_big(&time, colon_visible, style);
-        let date_line = format_date(&now);
+        let date_line = if display.hour_format.is_12h() {
+            format!("{} · {}", format_date(&now), format_meridiem(&now))
+        } else {
+            format_date(&now)
+        };
 
         let layout = ui::compute_layout(
             cols as usize,

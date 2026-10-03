@@ -1,6 +1,6 @@
 use crate::theme::Theme;
 
-pub const HINT: &str = "1/2 theme · s seconds · q quit";
+pub const HINT: &str = "1/2 theme · s seconds · h 12/24h · q quit";
 
 pub struct Layout {
     pub pad_x: usize,
