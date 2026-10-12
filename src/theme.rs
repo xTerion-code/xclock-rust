@@ -60,25 +60,46 @@ impl Theme {
         }
     }
 
-    // Per-theme palette hook: both themes share these colors for now.
+    // Black-and-purple palette: vivid purple digits on the
+    // terminal's (black) background, dark purple frame.
     pub fn border(self) -> Color {
-        Color::DarkGrey
+        Color::Rgb {
+            r: 88,
+            g: 28,
+            b: 135,
+        }
     }
 
     pub fn separator(self) -> Color {
-        Color::DarkGrey
+        Color::Rgb {
+            r: 88,
+            g: 28,
+            b: 135,
+        }
     }
 
     pub fn date(self) -> Color {
-        Color::Grey
+        Color::Rgb {
+            r: 192,
+            g: 132,
+            b: 252,
+        }
     }
 
     pub fn hours_minutes(self) -> Color {
-        Color::White
+        Color::Rgb {
+            r: 168,
+            g: 85,
+            b: 247,
+        }
     }
 
     pub fn seconds(self) -> Color {
-        Color::Cyan
+        Color::Rgb {
+            r: 216,
+            g: 180,
+            b: 254,
+        }
     }
 
     pub fn time_color(self, index: usize) -> Color {

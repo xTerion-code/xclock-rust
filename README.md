@@ -10,7 +10,7 @@ Terminal clock in Rust: large block digit face, date with weekday, frame and bli
 - 12-hour format with `AM`/`PM` (`--12h`, live key `h`)
 - Steady colon (`--no-blink`, live key `b`), hidden date (`--no-date`, live key `d`)
 - Date under the clock: `September 30, 2026 · Wednesday`
-- Colors: `HH:MM` in bold white, seconds in cyan, frame and separators dimmed
+- Colors: `HH:MM` in vivid purple, seconds in light lavender, frame in dark purple on black
 - Rounded frame `╭─╮│╰─╯` around the clock and date block
 - Alternate screen: the terminal is restored on exit
 - `Ctrl+C` exit with cursor and screen restored
