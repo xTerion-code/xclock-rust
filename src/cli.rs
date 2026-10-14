@@ -13,7 +13,7 @@ pub enum Action {
 }
 
 pub fn parse(args: &[String]) -> Result<Action, String> {
-    let mut theme = Theme::Modern;
+    let mut theme = Theme::Large;
     let mut show_seconds = true;
     let mut hour_format = HourFormat::default();
     let mut blink_colon = true;
@@ -89,7 +89,7 @@ pub fn usage() -> String {
         "Usage: xclock [--theme <name> | -t <name>] [--show-seconds | --no-seconds] [--12h | --24h] [--blink | --no-blink] [--list-themes] [--help]\n\
          \n\
          Options:\n  \
-           -t, --theme <name>  clock theme (default: modern): {}\n  \
+           -t, --theme <name>  clock theme (default: large): {}\n  \
            --show-seconds      show seconds (default)\n  \
            --no-seconds        hide seconds\n  \
            --12h               use 12-hour format\n  \
@@ -102,7 +102,7 @@ pub fn usage() -> String {
            --list-themes       list available themes\n  \
            -h, --help          show this help\n\
          \n\
-         Live keys: 1/2 switch theme, s toggles seconds, h toggles 12/24h, b toggles blink, d toggles date, q or Esc quits.",
+         Live keys: 1/2/3 switch theme, s toggles seconds, h toggles 12/24h, b toggles blink, d toggles date, q or Esc quits.",
         theme_ids()
     )
 }
@@ -112,7 +112,7 @@ pub fn themes_list() -> String {
     for t in Theme::all() {
         out.push_str(&format!("  {:<8} {}\n", t.id(), t.description()));
     }
-    out.push_str("\nLive keys: press 1/2 to switch, s to toggle seconds, h to toggle 12/24h, b to toggle blink, d to toggle date, q or Esc to quit.");
+    out.push_str("\nLive keys: press 1/2/3 to switch, s to toggle seconds, h to toggle 12/24h, b to toggle blink, d to toggle date, q or Esc to quit.");
     out
 }
 
@@ -136,18 +136,24 @@ mod tests {
     }
 
     #[test]
-    fn defaults_to_modern() {
+    fn defaults_to_large() {
         let c = run_config(&["xclock"]);
-        assert_eq!(c.theme, Theme::Modern);
+        assert_eq!(c.theme, Theme::Large);
         assert!(c.display.show_seconds);
         assert_eq!(c.display.hour_format, HourFormat::H24);
     }
 
     #[test]
     fn accepts_long_short_and_eq_forms() {
-        assert_eq!(run_theme(&["xclock", "--theme", "classic"]), Theme::Classic);
-        assert_eq!(run_theme(&["xclock", "-t", "classic"]), Theme::Classic);
-        assert_eq!(run_theme(&["xclock", "--theme=classic"]), Theme::Classic);
+        assert_eq!(run_theme(&["xclock", "--theme", "medium"]), Theme::Medium);
+        assert_eq!(run_theme(&["xclock", "-t", "medium"]), Theme::Medium);
+        assert_eq!(run_theme(&["xclock", "--theme=medium"]), Theme::Medium);
+        assert_eq!(run_theme(&["xclock", "--theme", "small"]), Theme::Small);
+        assert_eq!(run_theme(&["xclock", "-t", "small"]), Theme::Small);
+        assert_eq!(run_theme(&["xclock", "--theme=small"]), Theme::Small);
+        assert_eq!(run_theme(&["xclock", "--theme", "large"]), Theme::Large);
+        assert_eq!(run_theme(&["xclock", "--theme", "classic"]), Theme::Medium);
+        assert_eq!(run_theme(&["xclock", "--theme", "modern"]), Theme::Large);
     }
 
     #[test]

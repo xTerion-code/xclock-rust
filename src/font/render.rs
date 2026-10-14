@@ -1,4 +1,4 @@
-use super::{Style, block_glyph};
+use super::{Face, Style, block_glyph, compact_glyph};
 
 pub fn render_big(time: &str, colon_visible: bool, style: Style) -> Vec<String> {
     let chars: Vec<char> = time.chars().collect();
@@ -8,8 +8,18 @@ pub fn render_big(time: &str, colon_visible: bool, style: Style) -> Vec<String> 
         r.reserve(width);
     }
     for (i, ch) in chars.iter().enumerate() {
-        let g = block_glyph(*ch, colon_visible);
-        for (r, glyph_row) in g.iter().enumerate() {
+        let (b_g, c_g);
+        let glyph_rows: &[&str] = match style.face {
+            Face::Block => {
+                b_g = block_glyph(*ch, colon_visible);
+                &b_g
+            }
+            Face::Compact => {
+                c_g = compact_glyph(*ch, colon_visible);
+                &c_g
+            }
+        };
+        for (r, glyph_row) in glyph_rows.iter().enumerate() {
             for c in glyph_row.chars() {
                 for _ in 0..style.scale_x {
                     rows[r].push(c);
@@ -41,19 +51,26 @@ mod tests {
         gap_x: 2,
     };
 
+    const COMPACT_STYLE: Style = Style {
+        face: Face::Compact,
+        scale_x: 1,
+        gap_x: 1,
+    };
+
     #[test]
     fn rendered_width_matches_line_width() {
-        let style = BLOCK_STYLE;
-        for time in ["", "1", "12:34:56"] {
-            for visible in [true, false] {
-                let rows = render_big(time, visible, style);
-                assert_eq!(rows.len(), style.face.glyph_h());
-                for r in &rows {
-                    assert_eq!(
-                        r.chars().count(),
-                        line_width(time.chars().count(), style),
-                        "time {time:?} style {style:?}"
-                    );
+        for style in [BLOCK_STYLE, COMPACT_STYLE] {
+            for time in ["", "1", "12:34:56"] {
+                for visible in [true, false] {
+                    let rows = render_big(time, visible, style);
+                    assert_eq!(rows.len(), style.face.glyph_h());
+                    for r in &rows {
+                        assert_eq!(
+                            r.chars().count(),
+                            line_width(time.chars().count(), style),
+                            "time {time:?} style {style:?}"
+                        );
+                    }
                 }
             }
         }
@@ -61,16 +78,15 @@ mod tests {
 
     #[test]
     fn hidden_colon_keeps_layout_stable() {
-        let style = BLOCK_STYLE;
-        {
+        for style in [BLOCK_STYLE, COMPACT_STYLE] {
             let shown = render_big("12:34:56", true, style);
             let hidden = render_big("12:34:56", false, style);
             assert_eq!(shown.len(), hidden.len());
             for (a, b) in shown.iter().zip(&hidden) {
                 assert_eq!(a.chars().count(), b.chars().count());
             }
+            assert!(render_big(":", false, style)[1].trim().is_empty());
         }
-        assert!(render_big(":", false, BLOCK_STYLE)[2].trim().is_empty());
     }
 
     #[test]

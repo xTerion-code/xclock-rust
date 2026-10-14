@@ -4,8 +4,9 @@ Terminal clock in Rust: large block digit face, date with weekday, frame and bli
 
 ## Features
 
-- Two themes: `modern` (current large double-width block digits),
-  `classic` (old single-width block digits)
+- Three themes: `large` (large double-width block digits for wide terminals),
+  `medium` (single-width block digits for standard terminals),
+  `small` (compact 3x5 digits for small terminals)
 - `HH:MM:SS` time format, colon blinking at 1 Hz
 - 12-hour format with `AM`/`PM` (`--12h`, live key `h`)
 - Steady colon (`--no-blink`, live key `b`), hidden date (`--no-date`, live key `d`)
@@ -31,17 +32,18 @@ cargo run --release
 With a theme:
 
 ```bash
-cargo run --release -- --theme classic
-cargo run --release -- -t modern
+cargo run --release -- --theme medium
+cargo run --release -- -t small
+cargo run --release -- -t large
 ```
 
-Available themes (`--list-themes`): `modern`, `classic`.
+Available themes (`--list-themes`): `large`, `medium`, `small`.
 
-Exit: `Ctrl+C` or `q`/`Esc`. Live keys: `1`/`2` theme, `s` seconds, `h` 12/24h, `b` blink, `d` date.
+Exit: `Ctrl+C` or `q`/`Esc`. Live keys: `1`/`2`/`3` theme, `s` seconds, `h` 12/24h, `b` blink, `d` date.
 
 ## Examples
 
-`modern` (default):
+`large` (default):
 
 ```text
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -55,7 +57,7 @@ Exit: `Ctrl+C` or `q`/`Esc`. Live keys: `1`/`2` theme, `s` seconds, `h` 12/24h, 
 │    ██████████  ██████████              ██████████          ██              ██████████  ██████████    │
 │                                                                                                      │
 │                                    September 30, 2026 · Wednesday                                    │
-│                     1/2 theme · s seconds · h 12/24h · b blink · d date · q quit                     │
+│                     1/2/3 theme · s seconds · h 12/24h · b blink · d date · q quit                     │
 │                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -77,7 +79,7 @@ src/
   font/         — typefaces: mod (Face/Style), block (block_glyph),
                   render (render_big, line_width)
   locale.rs     — date: weekday_name(), month_name(), format_date()
-  theme.rs      — themes: Theme (modern/classic), palettes, style(), time_color()
+  theme.rs      — themes: Theme (large/medium/small), palettes, style(), time_color()
   ui/           — geometry and drawing: mod, layout (Layout, HINT, compute_layout),
                   render (render)
 ```

@@ -168,8 +168,8 @@ mod tests {
     use super::*;
     use crate::theme::Theme;
 
-    fn modern() -> Theme {
-        Theme::Modern
+    fn large() -> Theme {
+        Theme::Large
     }
 
     #[test]
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn render_without_date_omits_date_row() {
-        let style = modern().style();
+        let style = large().style();
         let rows = crate::font::render_big("12:34:56", true, style);
         let time_chars: Vec<char> = "12:34:56".chars().collect();
         let date = "September 30, 2026 · Wednesday";
@@ -208,11 +208,11 @@ mod tests {
             40,
             crate::font::line_width(time_chars.len(), style),
             date.chars().count(),
-            modern(),
+            large(),
             false,
         );
         let mut buf: Vec<u8> = Vec::new();
-        render(&mut buf, &l, &rows, &time_chars, None, modern()).unwrap();
+        render(&mut buf, &l, &rows, &time_chars, None, large()).unwrap();
         let out = String::from_utf8(buf).unwrap();
         assert!(!out.contains(date), "date should be hidden");
         assert!(out.contains(HINT), "hint missing");
@@ -220,27 +220,29 @@ mod tests {
 
     #[test]
     fn render_narrow_never_panics_or_wraps_wide() {
-        let style = modern().style();
-        let rows = crate::font::render_big("12:34:56", true, style);
-        let time_chars: Vec<char> = "12:34:56".chars().collect();
-        let l = crate::ui::compute_layout(
-            30,
-            24,
-            crate::font::line_width(8, style),
-            27,
-            modern(),
-            true,
-        );
-        let mut buf: Vec<u8> = Vec::new();
-        render(
-            &mut buf,
-            &l,
-            &rows,
-            &time_chars,
-            Some("September 30, 2026 · Wednesday"),
-            modern(),
-        )
-        .unwrap();
-        assert!(String::from_utf8(buf).is_ok());
+        for theme in Theme::all() {
+            let style = theme.style();
+            let rows = crate::font::render_big("12:34:56", true, style);
+            let time_chars: Vec<char> = "12:34:56".chars().collect();
+            let l = crate::ui::compute_layout(
+                30,
+                24,
+                crate::font::line_width(8, style),
+                27,
+                theme,
+                true,
+            );
+            let mut buf: Vec<u8> = Vec::new();
+            render(
+                &mut buf,
+                &l,
+                &rows,
+                &time_chars,
+                Some("September 30, 2026 · Wednesday"),
+                theme,
+            )
+            .unwrap();
+            assert!(String::from_utf8(buf).is_ok());
+        }
     }
 }

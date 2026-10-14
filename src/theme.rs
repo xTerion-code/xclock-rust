@@ -6,33 +6,37 @@ pub const SECONDS_START: usize = 5;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Theme {
-    Modern,
-    Classic,
+    Large,
+    Medium,
+    Small,
 }
 
 impl Theme {
-    pub fn all() -> [Theme; 2] {
-        [Theme::Modern, Theme::Classic]
+    pub fn all() -> [Theme; 3] {
+        [Theme::Large, Theme::Medium, Theme::Small]
     }
 
     pub fn id(self) -> &'static str {
         match self {
-            Theme::Modern => "modern",
-            Theme::Classic => "classic",
+            Theme::Large => "large",
+            Theme::Medium => "medium",
+            Theme::Small => "small",
         }
     }
 
     pub fn description(self) -> &'static str {
         match self {
-            Theme::Modern => "current: large double-width block digits",
-            Theme::Classic => "old: original single-width block digits",
+            Theme::Large => "large: double-width block digits for wide terminals",
+            Theme::Medium => "medium: single-width block digits for standard terminals",
+            Theme::Small => "small: compact 3x5 digits for small terminals",
         }
     }
 
     pub fn hotkey(self) -> char {
         match self {
-            Theme::Modern => '1',
-            Theme::Classic => '2',
+            Theme::Large => '1',
+            Theme::Medium => '2',
+            Theme::Small => '3',
         }
     }
 
@@ -41,19 +45,28 @@ impl Theme {
     }
 
     pub fn from_str(s: &str) -> Option<Theme> {
-        let lower = s.to_lowercase();
-        Theme::all().into_iter().find(|t| t.id() == lower)
+        match s.to_lowercase().as_str() {
+            "large" | "modern" | "big" => Some(Theme::Large),
+            "medium" | "classic" | "mid" => Some(Theme::Medium),
+            "small" | "compact" | "mini" => Some(Theme::Small),
+            _ => None,
+        }
     }
 
     pub fn style(self) -> Style {
         match self {
-            Theme::Modern => Style {
+            Theme::Large => Style {
                 face: Face::Block,
                 scale_x: 2,
                 gap_x: 2,
             },
-            Theme::Classic => Style {
+            Theme::Medium => Style {
                 face: Face::Block,
+                scale_x: 1,
+                gap_x: 1,
+            },
+            Theme::Small => Style {
+                face: Face::Compact,
                 scale_x: 1,
                 gap_x: 1,
             },
@@ -117,9 +130,12 @@ mod tests {
 
     #[test]
     fn parses_ids_case_insensitively() {
-        assert_eq!(Theme::from_str("modern"), Some(Theme::Modern));
-        assert_eq!(Theme::from_str("Classic"), Some(Theme::Classic));
-        assert_eq!(Theme::from_str("MODERN"), Some(Theme::Modern));
+        assert_eq!(Theme::from_str("large"), Some(Theme::Large));
+        assert_eq!(Theme::from_str("Medium"), Some(Theme::Medium));
+        assert_eq!(Theme::from_str("SMALL"), Some(Theme::Small));
+        assert_eq!(Theme::from_str("modern"), Some(Theme::Large));
+        assert_eq!(Theme::from_str("classic"), Some(Theme::Medium));
+        assert_eq!(Theme::from_str("compact"), Some(Theme::Small));
         assert_eq!(Theme::from_str("retro"), None);
         assert_eq!(Theme::from_str(""), None);
     }
@@ -127,7 +143,7 @@ mod tests {
     #[test]
     fn hotkeys_cover_all_themes_uniquely() {
         let keys: Vec<char> = Theme::all().iter().map(|t| t.hotkey()).collect();
-        assert_eq!(keys.len(), 2);
+        assert_eq!(keys.len(), 3);
         for t in Theme::all() {
             assert_eq!(Theme::from_hotkey(t.hotkey()), Some(t));
         }
@@ -147,9 +163,12 @@ mod tests {
 
     #[test]
     fn styles_match_documented_geometry() {
-        assert_eq!(Theme::Modern.style().face.glyph_h(), 7);
-        assert_eq!(line_width_of(Theme::Modern, 8), 8 * 10 + 7 * 2);
-        assert_eq!(line_width_of(Theme::Classic, 8), 8 * 5 + 7);
+        assert_eq!(Theme::Large.style().face.glyph_h(), 7);
+        assert_eq!(Theme::Medium.style().face.glyph_h(), 7);
+        assert_eq!(Theme::Small.style().face.glyph_h(), 5);
+        assert_eq!(line_width_of(Theme::Large, 8), 8 * 10 + 7 * 2);
+        assert_eq!(line_width_of(Theme::Medium, 8), 8 * 5 + 7);
+        assert_eq!(line_width_of(Theme::Small, 8), 8 * 3 + 7);
     }
 
     #[test]
