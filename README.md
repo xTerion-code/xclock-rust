@@ -74,22 +74,19 @@ src/
                   --show-date/--no-date, --list-themes, --help
   app.rs        — application loop, raw-mode keys, Ctrl+C, redraw on change
   terminal.rs   — terminal lifecycle: raw mode, alternate screen, cursor
-  display/      — options (DisplayOptions), hour format (HourFormat),
-                  format_time, format_meridiem
-  font/         — typefaces: mod (Face/Style), block (block_glyph),
-                  render (render_big, line_width)
-  locale.rs     — date: weekday_name(), month_name(), format_date()
+  display.rs    — display options (DisplayOptions), hour format (HourFormat),
+                  format_time, format_meridiem, format_date
+  font.rs       — typefaces (Face/Style), glyph tables, rasterization (render_big, line_width)
   theme.rs      — themes: Theme (large/medium/small), palettes, style(), time_color()
-  ui/           — geometry and drawing: mod, layout (Layout, HINT, compute_layout),
-                  render (render)
+  ui.rs         — geometry and drawing: layout (Layout, HINT, compute_layout), render()
 ```
 
 Extension points:
 
-- new typeface — only `src/font/`
-- different date localization — only `src/locale.rs`
-- different palette — only `src/theme.rs`
-- different layout/frame — only `src/ui/`
+- new typeface — `src/font.rs`
+- different date formatting — `src/display.rs`
+- different palette — `src/theme.rs`
+- different layout/frame — `src/ui.rs`
 
 ## Development
 
@@ -99,7 +96,7 @@ cargo test
 cargo clippy --all-targets
 ```
 
-Verified: `cargo build`, `cargo test` (38 tests) and `cargo clippy --all-targets` with no warnings.
+Verified: `cargo build`, `cargo test` (40 tests) and `cargo clippy --all-targets` with no warnings.
 
 ## Dependencies
 

@@ -10,9 +10,8 @@ use crossterm::{
     queue, terminal,
 };
 
-use crate::display::{DisplayOptions, format_meridiem, format_time};
+use crate::display::{DisplayOptions, format_date, format_meridiem, format_time};
 use crate::font::{line_width, render_big};
-use crate::locale::format_date;
 use crate::terminal::TerminalGuard;
 use crate::theme::Theme;
 use crate::ui;

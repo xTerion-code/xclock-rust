@@ -2,7 +2,6 @@ mod app;
 mod cli;
 mod display;
 mod font;
-mod locale;
 mod terminal;
 mod theme;
 mod ui;

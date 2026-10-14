@@ -6,7 +6,7 @@ Single-binary Rust TUI clock (`xclock`, edition 2024, Rust 1.98+). No workspace,
 
 - Run: `cargo run --release [-- --theme <large|medium|small>] [--show-seconds | --no-seconds]`
 - Dev check: `cargo build && cargo test && cargo clippy --all-targets` — clippy must stay warning-free.
-- Tests are unit tests co-located in `src/**/`: `cargo test` (38 tests). No integration suite, fixtures, or services.
+- Tests are unit tests co-located in `src/`: `cargo test` (40 tests). No integration suite, fixtures, or services.
 
 ## Architecture (`src/`)
 
@@ -15,15 +15,16 @@ Single-binary Rust TUI clock (`xclock`, edition 2024, Rust 1.98+). No workspace,
 - `app.rs` — event loop: 100 ms `event::poll`, redraw only when `(time, colon_visible, cols, lines, theme, display)` changes (`display` is the full `DisplayOptions`). Colon blink = `timestamp_subsec_millis() < 500` unless `--no-blink`. Terminal size fallback `(80, 24)`. In 12h mode the date line gains `· AM/PM` via `format_meridiem`.
 - `terminal.rs` — `TerminalGuard::enter()` RAII: raw mode + alternate screen + hide cursor; `Drop` restores all. Never bypass it in new entrypoints.
 - `theme.rs` — 3 themes (`Large`, `Medium`, `Small`): `Large` (5x7 `Face::Block`, `scale_x: 2`), `Medium` (5x7 `Face::Block`, `scale_x: 1`), `Small` (3x5 `Face::Compact`, `scale_x: 1`). `SECONDS_START = 5`: chars `0..5` (`HH:MM`) vivid purple, `5..` light lavender.
-- `font/` — `Face::Block` (5x7) and `Face::Compact` (3x5); size differences come from `Style{face, scale_x, gap_x}`. `display/` — `DisplayOptions{show_seconds, hour_format, blink_colon, show_date}` + toggles, `HourFormat{H24, H12}`, `format_time` + `format_meridiem`.
-- `ui/` — `layout::compute_layout` centers and clamps to narrow screens; inner width follows `max(clock, date, HINT)` + padding, hidden date shrinks block height by one row; `render` draws rounded frame + optional date + hint. `locale.rs` — English-only date strings.
+- `font.rs` — `Face::Block` (5x7) and `Face::Compact` (3x5), `Style{face, scale_x, gap_x}`, glyph tables, and text rasterization (`render_big`, `line_width`).
+- `display.rs` — `DisplayOptions{show_seconds, hour_format, blink_colon, show_date}` + toggles, `HourFormat{H24, H12}`, time formatting (`format_time`, `format_meridiem`), and date formatting (`format_date`).
+- `ui.rs` — `compute_layout` centers and clamps to narrow screens; inner width follows `max(clock, date, HINT)` + padding, hidden date shrinks block height by one row; `render` draws rounded frame + optional date + hint.
 - Live keys (in `app.rs`): `1`/`2`/`3` switch theme via `Theme::from_hotkey`, `s` toggles seconds, `h` toggles 12/24h, `b` toggles blink, `d` toggles date, `q`/`Esc` quit.
 
 ## Conventions
 
 - English only: code, comments, identifiers, commit messages, docs. No non-English strings except in throwaway local notes (never committed).
 - Minimal comments: explain only non-obvious logic (e.g. raw-mode signal handling, redraw-skip key). No restating code, no doc-comments on self-evident items.
-- One feature per file: new feature = new module file under the owning directory (`font/`, `ui/`, `display/`) + `mod` + re-export, wired via `main.rs`. Do not pile unrelated logic into existing files.
+- Cohesive domain modules: Keep modules organized around clear domain boundaries (`cli`, `terminal`, `theme`, `font`, `display`, `ui`, `app`) rather than splintering tightly coupled types across micro-files.
 
 ## Gotchas
 
