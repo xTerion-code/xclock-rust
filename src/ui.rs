@@ -90,7 +90,7 @@ fn write_bottom(
     queue!(stdout, SetForegroundColor(palette.border()))?;
     write!(stdout, "╰")?;
     write_repeated(stdout, "─", inner_w)?;
-    write!(stdout, "╯\r\n")?;
+    write!(stdout, "╯")?;
     queue!(stdout, ResetColor)?;
     Ok(())
 }

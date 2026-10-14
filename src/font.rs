@@ -37,7 +37,7 @@ pub fn render_big(time: &str, colon_visible: bool, style: Style) -> Vec<String> 
     let width = line_width(chars.len(), style);
     let mut rows = vec![String::new(); style.face.glyph_h()];
     for r in &mut rows {
-        r.reserve(width);
+        r.reserve(width * 4);
     }
     for (i, ch) in chars.iter().enumerate() {
         let (b_g, c_g);

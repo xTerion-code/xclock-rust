@@ -48,11 +48,11 @@ pub fn run(
                     && key.kind != KeyEventKind::Release
                 {
                     match key.code {
-                        KeyCode::Char('q') | KeyCode::Esc => {
+                        KeyCode::Char('q') | KeyCode::Char('Q') | KeyCode::Esc => {
                             running.store(false, Ordering::SeqCst);
                             break;
                         }
-                        KeyCode::Char('c') | KeyCode::Char('d')
+                        KeyCode::Char('c') | KeyCode::Char('C') | KeyCode::Char('d') | KeyCode::Char('D')
                             if key.modifiers.contains(KeyModifiers::CONTROL) =>
                         {
                             running.store(false, Ordering::SeqCst);
@@ -90,14 +90,23 @@ pub fn run(
             }
         }
 
+        if !running.load(Ordering::SeqCst) {
+            break;
+        }
+
         let now = Local::now();
         let colon_visible = !display.blink_colon || now.timestamp_subsec_millis() < 500;
         let (cols, lines) = terminal::size().unwrap_or((80, 24));
         let effective_theme =
             theme.resolve(cols as usize, lines as usize, display.show_seconds, display.show_date);
 
+        let time_sec = if display.show_seconds {
+            now.timestamp()
+        } else {
+            now.timestamp() / 60
+        };
         let key = (
-            now.timestamp(),
+            time_sec,
             colon_visible,
             cols,
             lines,
@@ -110,29 +119,38 @@ pub fn run(
         }
         last_key = Some(key);
 
-        if cols < 23 || lines < 11 {
+        let min_lines = Theme::Small.block_height(display.show_date);
+        if cols < 23 || lines < min_lines as u16 {
             let time = format_time(&now, display);
             let time_str = if display.hour_format.is_12h() {
                 format!("{} {}", time, format_meridiem(&now))
             } else {
                 time
             };
+            let current_dims = (cols, lines, 0, 0);
+            let needs_clear = last_layout_dims != Some(current_dims);
+            last_layout_dims = Some(current_dims);
+
+            let visible: String = time_str.chars().take(cols as usize).collect();
             let pad_y = (lines as usize).saturating_sub(1) / 2;
-            let pad_x = (cols as usize).saturating_sub(time_str.chars().count()) / 2;
+            let pad_x = (cols as usize).saturating_sub(visible.chars().count()) / 2;
+
+            if needs_clear {
+                queue!(
+                    stdout,
+                    terminal::Clear(terminal::ClearType::All),
+                    cursor::MoveTo(0, 0)
+                )?;
+            }
             queue!(
                 stdout,
-                terminal::Clear(terminal::ClearType::All),
-                cursor::MoveTo(0, 0)
+                cursor::MoveTo(pad_x as u16, pad_y as u16),
+                terminal::Clear(terminal::ClearType::CurrentLine),
+                SetForegroundColor(palette.hours_minutes())
             )?;
-            for _ in 0..pad_y {
-                write!(stdout, "\r\n")?;
-            }
-            ui::write_spaces(&mut stdout, pad_x)?;
-            queue!(stdout, SetForegroundColor(palette.hours_minutes()))?;
-            write!(stdout, "{time_str}\r\n")?;
+            write!(stdout, "{visible}")?;
             queue!(stdout, ResetColor)?;
             stdout.flush()?;
-            last_layout_dims = None;
             continue;
         }
 
