@@ -13,10 +13,14 @@ use crossterm::{
 use crate::display::{DisplayOptions, format_date, format_meridiem, format_time};
 use crate::font::{line_width, render_big};
 use crate::terminal::TerminalGuard;
-use crate::theme::Theme;
+use crate::theme::{Palette, Theme};
 use crate::ui;
 
-pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<()> {
+pub fn run(
+    initial_theme: Theme,
+    initial_palette: Palette,
+    initial_display: DisplayOptions,
+) -> io::Result<()> {
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
     let _ = ctrlc::set_handler(move || {
@@ -26,11 +30,12 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
     let _guard = TerminalGuard::enter()?;
     let mut stdout = BufWriter::new(io::stdout());
     let mut theme = initial_theme;
+    let mut palette = initial_palette;
     let mut display = initial_display;
 
     // Last drawn frame: skip redraws when nothing visible changed
     // (blink ticks at 2 Hz, time at 1 Hz, but we poll at ~10 Hz).
-    let mut last_key: Option<(String, bool, u16, u16, Theme, DisplayOptions)> = None;
+    let mut last_key: Option<(String, bool, u16, u16, Theme, DisplayOptions, Palette)> = None;
 
     while running.load(Ordering::SeqCst) {
         // 100 ms poll doubles as the frame timer.
@@ -47,6 +52,9 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
                         && t != theme
                     {
                         theme = t;
+                        last_key = None;
+                    } else if c == 'p' || c == 'P' {
+                        palette = palette.next();
                         last_key = None;
                     } else if c == 's' || c == 'S' {
                         display.toggle_seconds();
@@ -70,14 +78,16 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
         let colon_visible = !display.blink_colon || now.timestamp_subsec_millis() < 500;
         let time = format_time(&now, display);
         let (cols, lines) = terminal::size().unwrap_or((80, 24));
+        let effective_theme =
+            theme.resolve(cols as usize, lines as usize, display.show_seconds, display.show_date);
 
-        let key = (time.clone(), colon_visible, cols, lines, theme, display);
+        let key = (time.clone(), colon_visible, cols, lines, effective_theme, display, palette);
         if last_key.as_ref() == Some(&key) {
             continue;
         }
         last_key = Some(key);
 
-        let style = theme.style();
+        let style = effective_theme.style();
         let time_chars: Vec<char> = time.chars().collect();
         let rows = render_big(&time, colon_visible, style);
         let date_line = if display.hour_format.is_12h() {
@@ -91,7 +101,7 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
             lines as usize,
             line_width(time_chars.len(), style),
             date_line.chars().count(),
-            theme,
+            effective_theme,
             display.show_date,
         );
 
@@ -108,7 +118,8 @@ pub fn run(initial_theme: Theme, initial_display: DisplayOptions) -> io::Result<
             &rows,
             &time_chars,
             display.show_date.then_some(date_line.as_str()),
-            theme,
+            effective_theme,
+            palette,
         )?;
         stdout.flush()?;
     }
