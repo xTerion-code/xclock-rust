@@ -10,6 +10,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     match cli::parse(&args) {
         Ok(cli::Action::Help) => println!("{}", cli::usage()),
+        Ok(cli::Action::Version) => println!("xclock {}", env!("CARGO_PKG_VERSION")),
         Ok(cli::Action::ListThemes) => println!("{}", cli::themes_list()),
         Ok(cli::Action::ListPalettes) => println!("{}", cli::palettes_list()),
         Ok(cli::Action::Run(config)) => {

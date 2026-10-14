@@ -287,6 +287,15 @@ impl Theme {
         [Theme::Large, Theme::Medium, Theme::Small, Theme::Auto]
     }
 
+    pub fn next(self) -> Theme {
+        match self {
+            Theme::Large => Theme::Medium,
+            Theme::Medium => Theme::Small,
+            Theme::Small => Theme::Auto,
+            Theme::Auto => Theme::Large,
+        }
+    }
+
     pub fn id(self) -> &'static str {
         match self {
             Theme::Large => "large",
@@ -402,6 +411,18 @@ mod tests {
     }
 
     #[test]
+    fn theme_all_and_next_cycling() {
+        let themes = Theme::all();
+        assert_eq!(themes.len(), 4);
+        let mut curr = Theme::Large;
+        let expected = [Theme::Medium, Theme::Small, Theme::Auto, Theme::Large];
+        for next in expected {
+            curr = curr.next();
+            assert_eq!(curr, next);
+        }
+    }
+
+    #[test]
     fn hotkeys_cover_all_themes_uniquely() {
         let keys: Vec<char> = Theme::all().iter().map(|t| t.hotkey()).collect();
         assert_eq!(keys.len(), 4);
@@ -409,7 +430,7 @@ mod tests {
             assert_eq!(Theme::from_hotkey(t.hotkey()), Some(t));
         }
         assert_eq!(Theme::from_hotkey('q'), None);
-        for reserved in ['s', 'h', 'b', 'd', 'q', 'p'] {
+        for reserved in ['s', 'h', 'b', 'd', 'q', 'p', 't'] {
             assert!(
                 Theme::from_hotkey(reserved).is_none(),
                 "theme hotkey collides with action key `{reserved}`"

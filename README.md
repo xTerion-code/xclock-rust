@@ -3,7 +3,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.98%2B-blue.svg)](https://www.rust-lang.org)
 [![Edition](https://img.shields.io/badge/edition-2024-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
-[![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-48%20passed-brightgreen.svg)](#testing)
 
 A modern, responsive, and lightweight terminal digital clock for Unix environments, built in Rust using [`crossterm`](https://crates.io/crates/crossterm).
 
@@ -27,7 +27,7 @@ A modern, responsive, and lightweight terminal digital clock for Unix environmen
   - `amber`: Warm amber CRT phosphor glow reminiscent of vintage workstations.
   - `monochrome`: Crisp, high-contrast white and silver for minimalist setups.
   - `rainbow`: Vibrant spectral rainbow across each digit position.
-- **Interactive Live Controls**: Switch themes (`1`/`2`/`3`/`a`), cycle palettes (`p`), toggle seconds (`s`), flip 12h/24h time (`h`), toggle colon blinking (`b`), and hide/show date (`d`) on the fly without restarting.
+- **Interactive Live Controls**: Switch themes (`1`/`2`/`3`/`a`), cycle themes (`t`), cycle palettes (`p`), toggle seconds (`s`), flip 12h/24h time (`h`), toggle colon blinking (`b`), and hide/show date (`d`) on the fly without restarting.
 - **Precision Time & Date**:
   - 24-hour or 12-hour format with trailing `AM`/`PM` indicator.
   - Optional seconds display (`HH:MM:SS` or `HH:MM`).
@@ -120,6 +120,7 @@ xclock -t auto -p rainbow
 | `--no-date`, `--hide-date` | | *none* | | Hide the date line, reducing frame height. |
 | `--list-themes` | | *none* | | Print available themes with descriptions and exit. |
 | `--list-palettes` | | *none* | | Print available color palettes with descriptions and exit. |
+| `--version` | `-v`, `-V` | *none* | | Display version information and exit. |
 | `--help` | `-h` | *none* | | Display usage help text and exit. |
 
 > **Note on CLI Syntax**:
@@ -130,7 +131,7 @@ xclock -t auto -p rainbow
 
 | Code | Meaning | Description |
 | :---: | :--- | :--- |
-| `0` | **Success** | Clean exit triggered by user (`q`, `Esc`, or `Ctrl+C`), or standard help/listing flag. |
+| `0` | **Success** | Clean exit triggered by user (`q`, `Esc`, `Ctrl+C`, or `Ctrl+D`), or standard help/version/listing flag. |
 | `1` | **Runtime Error** | Terminal initialization failure, raw mode error, or unexpected I/O break. |
 | `2` | **CLI Error** | Invalid or unrecognized argument, missing parameter value, or invalid option format. |
 
@@ -146,6 +147,7 @@ While `xclock` is running in raw mode, you can change settings dynamically witho
 | `2` | **Medium Theme** | Single-width 5x7 block face; fits standard 80x24 terminals. |
 | `3` | **Small Theme** | Compact 3x5 face; fits small terminals and window splits down to 45x14. |
 | `a` / `0` | **Auto Theme** | Dynamically adapts theme choice to live terminal width and height. |
+| `t` / `T` | **Cycle Theme** | Cycles sequentially: `large` → `medium` → `small` → `auto` → `large`. |
 | `p` / `P` | **Cycle Palette** | Cycles: `purple` → `matrix` → `amber` → `monochrome` → `rainbow` → `purple`. |
 | `s` / `S` | **Toggle Seconds** | Toggles between `HH:MM:SS` and `HH:MM`. |
 | `h` / `H` | **Toggle 12h / 24h** | Switches between 24-hour mode and 12-hour mode with `AM`/`PM` label. |
@@ -153,6 +155,7 @@ While `xclock` is running in raw mode, you can change settings dynamically witho
 | `d` / `D` | **Toggle Date** | Toggles date display on and off, dynamically resizing frame height. |
 | `q` / `Esc` | **Quit** | Restores terminal cursor, leaves alternate screen, and exits cleanly. |
 | `Ctrl+C` | **Quit** | Intercepted in both raw key handler and POSIX signal handler for safe exit. |
+| `Ctrl+D` | **Quit** | Standard EOF exit in raw mode. |
 
 ---
 
@@ -216,7 +219,7 @@ src/
 # Build debug binary
 cargo build
 
-# Run comprehensive test suite (47 tests across all modules)
+# Run comprehensive test suite (48 tests across all modules)
 cargo test
 
 # Run clippy linter (strictly warning-free)

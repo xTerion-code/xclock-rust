@@ -10,6 +10,7 @@ pub struct Config {
 pub enum Action {
     Run(Config),
     Help,
+    Version,
     ListThemes,
     ListPalettes,
 }
@@ -26,6 +27,9 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
     while let Some(arg) = it.next() {
         if arg == "-h" || arg == "--help" {
             return Ok(Action::Help);
+        }
+        if arg == "-v" || arg == "-V" || arg == "--version" {
+            return Ok(Action::Version);
         }
         if arg == "--list-themes" {
             return Ok(Action::ListThemes);
@@ -121,7 +125,7 @@ fn palette_ids() -> String {
 
 pub fn usage() -> String {
     format!(
-        "Usage: xclock [--theme <name> | -t <name>] [--palette <name> | -p <name>] [--show-seconds | --no-seconds] [--12h | --24h] [--blink | --no-blink] [--show-date | --no-date] [--list-themes] [--list-palettes] [--help]\n\
+        "Usage: xclock [--theme <name> | -t <name>] [--palette <name> | -p <name>] [--show-seconds | --no-seconds] [--12h | --24h] [--blink | --no-blink] [--show-date | --no-date] [--list-themes] [--list-palettes] [-v | --version] [--help]\n\
          \n\
          Options:\n  \
            -t, --theme <name>    clock theme (default: large): {}\n  \
@@ -137,9 +141,10 @@ pub fn usage() -> String {
            --no-date             hide date\n  \
            --list-themes         list available themes\n  \
            --list-palettes       list available color palettes\n  \
+           -v, -V, --version     show version information\n  \
            -h, --help            show this help\n\
          \n\
-         Live keys: 1/2/3/a switch theme, p cycles palette, s toggles seconds, h toggles 12/24h, b toggles blink, d toggles date, q or Esc quits.",
+         Live keys: 1/2/3/a switch theme, t cycles theme, p cycles palette, s toggles seconds, h toggles 12/24h, b toggles blink, d toggles date, q or Esc quits.",
         theme_ids(),
         palette_ids()
     )
@@ -150,7 +155,7 @@ pub fn themes_list() -> String {
     for t in Theme::all() {
         out.push_str(&format!("  {:<8} {}\n", t.id(), t.description()));
     }
-    out.push_str("\nLive keys: press 1/2/3/a to switch, p to cycle palette, s to toggle seconds, h to toggle 12/24h, b to toggle blink, d to toggle date, q or Esc to quit.");
+    out.push_str("\nLive keys: press 1/2/3/a to switch, t to cycle themes, p to cycle palette, s to toggle seconds, h to toggle 12/24h, b to toggle blink, d to toggle date, q or Esc to quit.");
     out
 }
 
@@ -324,6 +329,18 @@ mod tests {
             Ok(Action::Help)
         ));
         assert!(matches!(parse(&args(&["xclock", "-h"])), Ok(Action::Help)));
+        assert!(matches!(
+            parse(&args(&["xclock", "--version"])),
+            Ok(Action::Version)
+        ));
+        assert!(matches!(
+            parse(&args(&["xclock", "-v"])),
+            Ok(Action::Version)
+        ));
+        assert!(matches!(
+            parse(&args(&["xclock", "-V"])),
+            Ok(Action::Version)
+        ));
         assert!(matches!(
             parse(&args(&["xclock", "--list-themes"])),
             Ok(Action::ListThemes)

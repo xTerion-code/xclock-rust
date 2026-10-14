@@ -47,15 +47,35 @@ pub fn compute_layout(
 // Note: `\r\n` endings everywhere — the app runs in raw mode,
 // where a bare `\n` does not return the carriage.
 
+pub(crate) fn write_spaces(stdout: &mut impl Write, count: usize) -> io::Result<()> {
+    const SPACES: [u8; 64] = [b' '; 64];
+    let mut remaining = count;
+    while remaining > 0 {
+        let chunk = remaining.min(SPACES.len());
+        stdout.write_all(&SPACES[..chunk])?;
+        remaining -= chunk;
+    }
+    Ok(())
+}
+
+fn write_repeated(stdout: &mut impl Write, s: &str, count: usize) -> io::Result<()> {
+    for _ in 0..count {
+        stdout.write_all(s.as_bytes())?;
+    }
+    Ok(())
+}
+
 fn write_top(
     stdout: &mut impl Write,
     palette: Palette,
     pad_x: usize,
     inner_w: usize,
 ) -> io::Result<()> {
-    let pad = " ".repeat(pad_x);
+    write_spaces(stdout, pad_x)?;
     queue!(stdout, SetForegroundColor(palette.border()))?;
-    write!(stdout, "{pad}╭{}╮\r\n", "─".repeat(inner_w))?;
+    write!(stdout, "╭")?;
+    write_repeated(stdout, "─", inner_w)?;
+    write!(stdout, "╮\r\n")?;
     queue!(stdout, ResetColor)?;
     Ok(())
 }
@@ -66,9 +86,11 @@ fn write_bottom(
     pad_x: usize,
     inner_w: usize,
 ) -> io::Result<()> {
-    let pad = " ".repeat(pad_x);
+    write_spaces(stdout, pad_x)?;
     queue!(stdout, SetForegroundColor(palette.border()))?;
-    write!(stdout, "{pad}╰{}╯\r\n", "─".repeat(inner_w))?;
+    write!(stdout, "╰")?;
+    write_repeated(stdout, "─", inner_w)?;
+    write!(stdout, "╯\r\n")?;
     queue!(stdout, ResetColor)?;
     Ok(())
 }
@@ -79,11 +101,11 @@ fn write_empty(
     pad_x: usize,
     inner_w: usize,
 ) -> io::Result<()> {
-    let pad = " ".repeat(pad_x);
+    write_spaces(stdout, pad_x)?;
     queue!(stdout, SetForegroundColor(palette.border()))?;
-    write!(stdout, "{pad}│")?;
+    write!(stdout, "│")?;
     queue!(stdout, ResetColor)?;
-    write!(stdout, "{}", " ".repeat(inner_w))?;
+    write_spaces(stdout, inner_w)?;
     queue!(stdout, SetForegroundColor(palette.border()))?;
     write!(stdout, "│\r\n")?;
     queue!(stdout, ResetColor)?;
@@ -98,50 +120,47 @@ fn write_clock_rows(
     palette: Palette,
     style: Style,
 ) -> io::Result<()> {
-    let row_chars: Vec<Vec<char>> = rows.iter().map(|r| r.chars().collect()).collect();
     let rendered_w = style.face.glyph_w() * style.scale_x;
 
     queue!(stdout, SetAttribute(Attribute::Bold))?;
-    for row in &row_chars {
-        let pad = " ".repeat(layout.pad_x);
+    for row in rows {
+        write_spaces(stdout, layout.pad_x)?;
         queue!(stdout, SetForegroundColor(palette.border()))?;
-        write!(stdout, "{pad}│{}", " ".repeat(layout.clock_offset))?;
+        write!(stdout, "│")?;
+        write_spaces(stdout, layout.clock_offset)?;
 
-        // Cells used inside the frame so far; stop at `inner_w`
-        // instead of wrapping on narrow terminals.
+        let mut row_chars = row.chars();
         let mut used = layout.clock_offset;
-        let mut col = 0usize;
+
         for (i, _ch) in time_chars.iter().enumerate() {
             if used >= layout.inner_w {
                 break;
             }
             queue!(stdout, SetForegroundColor(palette.time_color(i)))?;
-            for k in 0..rendered_w {
+            for _ in 0..rendered_w {
                 if used >= layout.inner_w {
                     break;
                 }
-                let c = row.get(col + k).copied().unwrap_or(' ');
+                let c = row_chars.next().unwrap_or(' ');
                 write!(stdout, "{c}")?;
                 used += 1;
             }
-            col += rendered_w;
             if i + 1 < time_chars.len() && used < layout.inner_w {
-                queue!(stdout, SetForegroundColor(palette.separator()))?;
                 for _ in 0..style.gap_x {
                     if used >= layout.inner_w {
                         break;
                     }
-                    let c = row.get(col).copied().unwrap_or(' ');
+                    let c = row_chars.next().unwrap_or(' ');
                     write!(stdout, "{c}")?;
-                    col += 1;
                     used += 1;
                 }
             }
         }
 
         let right = layout.inner_w.saturating_sub(used);
+        write_spaces(stdout, right)?;
         queue!(stdout, SetForegroundColor(palette.border()))?;
-        write!(stdout, "{}│\r\n", " ".repeat(right))?;
+        write!(stdout, "│\r\n")?;
         queue!(stdout, ResetColor)?;
     }
     queue!(stdout, SetAttribute(Attribute::Reset))?;
@@ -155,19 +174,23 @@ fn write_centered(
     palette: Palette,
     color: crossterm::style::Color,
 ) -> io::Result<()> {
-    let pad = " ".repeat(layout.pad_x);
     let text_w = text.chars().count();
     let offset = layout.inner_w.saturating_sub(text_w) / 2;
+    write_spaces(stdout, layout.pad_x)?;
     queue!(stdout, SetForegroundColor(palette.border()))?;
-    write!(stdout, "{pad}│{}", " ".repeat(offset))?;
+    write!(stdout, "│")?;
+    write_spaces(stdout, offset)?;
     queue!(stdout, SetForegroundColor(color))?;
     let avail = layout.inner_w.saturating_sub(offset);
-    let shown: String = text.chars().take(avail).collect();
-    let shown_w = shown.chars().count();
-    write!(stdout, "{shown}")?;
+    let mut shown_w = 0;
+    for ch in text.chars().take(avail) {
+        write!(stdout, "{ch}")?;
+        shown_w += 1;
+    }
     let right = layout.inner_w.saturating_sub(offset + shown_w);
+    write_spaces(stdout, right)?;
     queue!(stdout, SetForegroundColor(palette.border()))?;
-    write!(stdout, "{}│\r\n", " ".repeat(right))?;
+    write!(stdout, "│\r\n")?;
     queue!(stdout, ResetColor)?;
     Ok(())
 }
