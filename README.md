@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.98%2B-blue.svg)](https://www.rust-lang.org)
 [![Edition](https://img.shields.io/badge/edition-2024-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/)
-[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-green.svg)](#license)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 [![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen.svg)](#testing)
 
 A modern, responsive, and lightweight terminal digital clock for Unix environments, built in Rust using [`crossterm`](https://crates.io/crates/crossterm).
@@ -247,9 +247,4 @@ The test suite validates:
 
 ## License
 
-This project is licensed under either of:
-
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
-- MIT License ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
-
-at your option.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
