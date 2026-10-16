@@ -1,46 +1,60 @@
-# xclock
+# xclock — Your Terminal Just Learned How to Tell Time in Style
 
 [![Rust](https://img.shields.io/badge/rust-1.98%2B-blue.svg)](https://www.rust-lang.org)
 [![Edition](https://img.shields.io/badge/edition-2024-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
-[![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen.svg)](#development)
 
-A modern, responsive, and lightweight terminal digital clock for Unix environments, built in Rust using [`crossterm`](https://crates.io/crates/crossterm).
+Forget that sad little `HH:MM` in your status bar. `xclock` is a loud, proud, flicker-free digital clock for your terminal — built in Rust with [`crossterm`](https://crates.io/crates/crossterm), wrapped in a slick rounded frame, and glowing like it just escaped from a 1983 sci-fi movie.
 
-`xclock` pairs bold typographic block-digit faces with real-time responsive layout adaptation, truecolor CRT/phosphor color palettes, flexible time/date formatting, and instant live keyboard controls—all rendered flicker-free within an elegant rounded Unicode frame.
+Big blocky digits. Six shamelessly saturated color palettes. Live keyboard controls. Zero flicker. It does exactly one job — showing the time — and it overdoes it gloriously.
+
+---
+
+## Why xclock?
+
+- **It is huge.** Double-width 5x7 block digits you can read from across the room.
+- **It is dramatic.** CRT amber glow, Matrix green rain vibes, full rainbow chaos — pick your personality.
+- **It is alive.** Smash keys while it runs and it morphs instantly. No restart, no config file archaeology.
+- **It is polite.** Cleans up raw mode, restores your cursor, leaves the alternate screen spotless — even when you `Ctrl+C` out of panic.
+- **It is fast.** Buffered single-flush rendering at ~10 Hz with state-diffing, so it redraws only when something actually changed.
+
+In short: `watch -n1 date` wishes it looked this good.
 
 ---
 
 ## Features
 
-- **Typographic Clockfaces**: High-contrast, pixel-crafted vector glyphs for digits `0-9` and colon separators.
-  - **Block (5x7)**: Solid heavy-weight glyphs designed for high readability.
-  - **Compact (3x5)**: Space-efficient condensed glyphs for constrained terminals and small window splits.
-- **4 Sizing Themes**:
-  - `large`: Double-width 5x7 block digits with expanded spacing for wide screens.
-  - `medium`: Single-width 5x7 block digits for standard terminals.
-  - `small`: 3x5 compact digits for small displays and status panes.
-  - `auto`: Dynamic layout engine that automatically selects the largest theme that comfortably fits your current terminal dimensions.
-- **6 Truecolor Palettes**:
-  - `black-red` *(default)*: High-contrast crimson and bold red digits on dark framing with light coral seconds.
-  - `purple`: Vivid neon purple digits with soft lavender seconds on dark purple framing.
-  - `matrix`: Classic green phosphor CRT aesthetic inspired by digital rain terminals.
-  - `amber`: Warm amber CRT phosphor glow reminiscent of vintage workstations.
-  - `monochrome`: Crisp, high-contrast white and silver for minimalist setups.
-  - `rainbow`: Vibrant spectral rainbow across each digit position.
-- **Interactive Live Controls**: Switch themes (`1`/`2`/`3`/`a`), cycle themes (`t`), cycle palettes (`p`), toggle seconds (`s`), flip 12h/24h time (`h`), toggle colon blinking (`b`), and hide/show date (`d`) on the fly without restarting.
-- **Precision Time & Date**:
-  - 24-hour or 12-hour format with trailing `AM`/`PM` indicator.
-  - Optional seconds display (`HH:MM:SS` or `HH:MM`).
-  - 1 Hz colon pulse (500 ms on / 500 ms off) or steady colon.
-  - Localized date header displaying full month name, day, year, and weekday.
-- **Performance & Terminal Lifecycle**:
-  - **Flicker-Free Rendering**: Single-flush buffered output (`BufWriter`) with state-diff change detection (~10 Hz poll skipping redundant redraws).
-  - **Graceful RAII Cleanup**: Safe raw mode and alternate screen management via `TerminalGuard`, ensuring cursor and screen restoration even on unexpected aborts or `Ctrl+C`.
+- **Two Hand-Crafted Typefaces**
+  - **Block (5x7):** Thick, confident, highly readable. The main character.
+  - **Compact (3x5):** The same attitude, squeezed into tiny splits and side panes.
+- **4 Sizing Themes**
+  - `large`: Double-width 5x7. For wide screens and showing off.
+  - `medium`: Single-width 5x7. Fits a classic 80x24 like a glove.
+  - `small`: 3x5 compact. Survives tmux splits down to 45x14.
+  - `auto`: The smart one. Picks the biggest theme that fits your window, live, every frame.
+- **6 Truecolor Palettes**
+  - `black-red` *(default)*: Crimson on black. Business in the front, alarm clock in the back.
+  - `purple`: Neon purple with lavender seconds. Retrowave approved.
+  - `matrix`: Green phosphor. Wake up, Neo — standup is in 10 minutes.
+  - `amber`: Warm vintage workstation glow. Smells faintly of old capacitors.
+  - `monochrome`: Crisp white and silver. For minimalists and people with strong opinions about fonts.
+  - `rainbow`: Every digit gets its own color. Subtlety left the chat.
+- **Live Remote Control for Time Itself:** Themes (`1`/`2`/`3`/`a`), cycle themes (`t`), cycle palettes (`p`), seconds (`s`), 12h/24h (`h`), colon blink (`b`), date (`d`) — all without restarting.
+- **Proper Timekeeping:**
+  - 24h military time or 12h with `AM`/`PM`.
+  - Optional seconds (`HH:MM:SS` vs. chill `HH:MM`).
+  - 1 Hz colon pulse (500ms on / 500ms off) or rock-steady colons.
+  - Full date line: month name, day, year, weekday. No cryptic `10/14/26` nonsense.
+- **Engineered, Not Hacked Together:**
+  - **Flicker-free:** `BufWriter` + single flush + render-key diffing. No tearing, no CPU spinning.
+  - **RAII cleanup:** `TerminalGuard` restores raw mode, cursor, and screen even on abort or `Ctrl+C`.
 
 ---
 
 ## Preview
+
+Behold, 22:19 in all its blocky glory:
 
 ```text
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -59,16 +73,18 @@ A modern, responsive, and lightweight terminal digital clock for Unix environmen
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
+Yes, the footer is a cheat sheet. You will memorize it in about 30 seconds and then feel like a clock wizard.
+
 ---
 
 ## Installation
 
-### Prerequisites
+### What You Need
 
-- **Rust Toolchain**: Rust 1.98+ and Cargo (2024 edition).
-- **Terminal Emulator**: Any modern terminal with UTF-8 encoding and 24-bit Truecolor (`COLORTERM=truecolor` or `24bit`) support (e.g., Alacritty, Kitty, WezTerm, iTerm2, GNOME Terminal, Foot).
+- **Rust 1.98+ + Cargo (2024 edition).** Time travel requires a modern compiler.
+- **A decent terminal** with UTF-8 and 24-bit Truecolor (`COLORTERM=truecolor` or `24bit`) — Alacritty, Kitty, WezTerm, iTerm2, GNOME Terminal, Foot, etc.
 
-### Build from Source
+### Build From Source
 
 ```bash
 git clone https://github.com/xTerionsilker/xClock-Rust.git xclock
@@ -76,87 +92,89 @@ cd xclock
 cargo build --release
 ```
 
-The compiled binary will be placed at `./target/release/xclock`.
+Binary lands at `./target/release/xclock`. Big, fast, ready to glow.
 
-### Install to Cargo Bin Path
+### Install to Your PATH
 
 ```bash
 cargo install --path .
 ```
 
-Ensure `~/.cargo/bin` is in your `$PATH`.
+Make sure `~/.cargo/bin` is in your `$PATH`, or your shell will pretend it never happened.
 
 ---
 
 ## Usage
 
 ```bash
-# Launch with default settings (Large theme, Purple palette, 24h, seconds on, colon blink on)
+# Just vibes. Defaults: large theme, black-red palette, 24h, seconds on, blink on.
 xclock
 
-# Launch with a specific theme and palette
+# Hacker terminal look
 xclock --theme medium --palette matrix
 
-# Launch in compact 12-hour mode without seconds or date
+# Tiny, polite, 12-hour clock for a corner pane
 xclock -t small -p amber --12h --no-seconds --no-date
 
-# Launch with automatic sizing that adapts to terminal window resizing
+# Maximum adaptability + maximum color chaos, follows window resizes live
 xclock -t auto -p rainbow
 ```
 
 ### Command-Line Options
 
-| Option | Short | Arguments | Default | Description |
+| Option | Short | Args | Default | What It Does |
 | :--- | :--- | :--- | :--- | :--- |
-| `--theme` | `-t` | `<name>` | `large` | Clock theme: `large`, `medium`, `small`, or `auto`. |
-| `--palette` | `-p` | `<name>` | `black-red` | Color palette: `black-red`, `purple`, `matrix`, `amber`, `monochrome`, or `rainbow`. |
-| `--show-seconds` | | *none* | *active* | Display seconds (`HH:MM:SS`). |
-| `--no-seconds`, `--hide-seconds` | | *none* | | Hide seconds (`HH:MM`). |
-| `--24h` | | *none* | *active* | Display time in 24-hour military format (`00`–`23`). |
-| `--12h` | | *none* | | Display time in 12-hour format (`01`–`12`) with `AM`/`PM` appended to date line. |
-| `--hour-format` | | `<12\|24>` | `24` | Explicit hour format (`12`, `12h`, `24`, `24h`). |
-| `--blink` | | *none* | *active* | Blink colon separators at 1 Hz. |
-| `--no-blink` | | *none* | | Keep colon separators steadily visible. |
-| `--show-date` | | *none* | *active* | Show the date line under the clock face. |
-| `--no-date`, `--hide-date` | | *none* | | Hide the date line, reducing frame height. |
-| `--list-themes` | | *none* | | Print available themes with descriptions and exit. |
-| `--list-palettes` | | *none* | | Print available color palettes with descriptions and exit. |
-| `--version` | `-v`, `-V` | *none* | | Display version information and exit. |
-| `--help` | `-h` | *none* | | Display usage help text and exit. |
+| `--theme` | `-t` | `<name>` | `large` | `large`, `medium`, `small`, or `auto`. Go big or go `auto`. |
+| `--palette` | `-p` | `<name>` | `black-red` | `black-red`, `purple`, `matrix`, `amber`, `monochrome`, or `rainbow`. |
+| `--show-seconds` | | *none* | *on* | Full `HH:MM:SS` experience. |
+| `--no-seconds`, `--hide-seconds` | | *none* | | Zen mode: just `HH:MM`. |
+| `--24h` | | *none* | *on* | Military time (`00`–`23`). No AM/PM drama. |
+| `--12h` | | *none* | | Civilian time (`01`–`12`) with `AM`/`PM` tag. |
+| `--hour-format` | | `<12\|24>` | `24` | Explicit version of the above (`12`, `12h`, `24`, `24h`). |
+| `--blink` | | *none* | *on* | Colons pulse at 1 Hz. Hypnotic. |
+| `--no-blink` | | *none* | | Colons stay solid. For the easily distracted. |
+| `--show-date` | | *none* | *on* | Date line under the clock. |
+| `--no-date`, `--hide-date` | | *none* | | Date? Never heard of her. Frame gets shorter. |
+| `--list-themes` | | *none* | | Show themes and bail out. |
+| `--list-palettes` | | *none* | | Show palettes and bail out. |
+| `--version` | `-v`, `-V` | *none* | | Print version, exit. |
+| `--help` | `-h` | *none* | | Print help, exit. |
 
-> **Note on CLI Syntax**:
-> - Both space-separated and equals syntax are supported (e.g., `-t medium`, `--theme medium`, `--theme=medium`).
-> - Flags within the same functional group follow "last flag wins" precedence (e.g., `--no-seconds --show-seconds` resolves to showing seconds).
+> **CLI house rules:**
+> - Both `-t medium` and `--theme=medium` work. We are not monsters.
+> - Same group? Last flag wins. `--no-seconds --show-seconds` means seconds win.
 
 ### Exit Codes
 
-| Code | Meaning | Description |
+| Code | Meaning | Translation |
 | :---: | :--- | :--- |
-| `0` | **Success** | Clean exit triggered by user (`q`, `Esc`, `Ctrl+C`, or `Ctrl+D`), or standard help/version/listing flag. |
-| `1` | **Runtime Error** | Terminal initialization failure, raw mode error, or unexpected I/O break. |
-| `2` | **CLI Error** | Invalid or unrecognized argument, missing parameter value, or invalid option format. |
+| `0` | **Success** | You quit gracefully (`q`, `Esc`, `Ctrl+C`, `Ctrl+D`) or just asked for `--help`. Well done. |
+| `1` | **Runtime Error** | Terminal refused to cooperate — raw mode or I/O blew up. |
+| `2` | **CLI Error** | Typo, unknown flag, or missing value. The parser judges silently. |
 
 ---
 
 ## Live Interactive Controls
 
-While `xclock` is running in raw mode, you can change settings dynamically without restarting:
+This is the fun part. While `xclock` is running, just press stuff:
 
-| Key | Action | Details |
+| Key | Action | Effect |
 | :---: | :--- | :--- |
-| `1` | **Large Theme** | Double-width 5x7 block face; requires wide terminal. |
-| `2` | **Medium Theme** | Single-width 5x7 block face; fits standard 80x24 terminals. |
-| `3` | **Small Theme** | Compact 3x5 face; fits small terminals and window splits down to 45x14. |
-| `a` / `0` | **Auto Theme** | Dynamically adapts theme choice to live terminal width and height. |
-| `t` / `T` | **Cycle Theme** | Cycles sequentially: `large` → `medium` → `small` → `auto` → `large`. |
-| `p` / `P` | **Cycle Palette** | Cycles: `black-red` → `purple` → `matrix` → `amber` → `monochrome` → `rainbow` → `black-red`. |
-| `s` / `S` | **Toggle Seconds** | Toggles between `HH:MM:SS` and `HH:MM`. |
-| `h` / `H` | **Toggle 12h / 24h** | Switches between 24-hour mode and 12-hour mode with `AM`/`PM` label. |
-| `b` / `B` | **Toggle Blink** | Toggles colon blinking at 1 Hz vs. static display. |
-| `d` / `D` | **Toggle Date** | Toggles date display on and off, dynamically resizing frame height. |
-| `q` / `Esc` | **Quit** | Restores terminal cursor, leaves alternate screen, and exits cleanly. |
-| `Ctrl+C` | **Quit** | Intercepted in both raw key handler and POSIX signal handler for safe exit. |
-| `Ctrl+D` | **Quit** | Standard EOF exit in raw mode. |
+| `1` | **Large Theme** | Maximum chonk. Needs a wide window. |
+| `2` | **Medium Theme** | The reliable 80x24 citizen. |
+| `3` | **Small Theme** | Fits splits and sidebars down to 45x14. |
+| `a` / `0` | **Auto Theme** | Watches your window size and adapts live. |
+| `t` / `T` | **Cycle Theme** | `large` → `medium` → `small` → `auto` → repeat. Theme roulette. |
+| `p` / `P` | **Cycle Palette** | `black-red` → `purple` → `matrix` → `amber` → `monochrome` → `rainbow` → repeat. |
+| `s` / `S` | **Toggle Seconds** | `HH:MM:SS` vs. `HH:MM`. Instant gratification. |
+| `h` / `H` | **Toggle 12h / 24h** | Time-travel between army time and normal human time. |
+| `b` / `B` | **Toggle Blink** | Pulsing colons vs. stoic colons. |
+| `d` / `D` | **Toggle Date** | Date line appears / vanishes, frame resizes itself. |
+| `q` / `Esc` | **Quit** | Clean exit. Cursor restored, screen restored, dignity intact. |
+| `Ctrl+C` | **Quit** | Caught twice (key handler + signal handler) because we really do not want to trash your terminal. |
+| `Ctrl+D` | **Quit** | Classic EOF goodbye. |
+
+Pro tip: mash `p` repeatedly in a dark room. You are welcome.
 
 ---
 
@@ -164,92 +182,93 @@ While `xclock` is running in raw mode, you can change settings dynamically witho
 
 ### Themes Reference
 
-| Theme | Aliases | Face Grid | Scale X | Character Gap | Min Cols (8 chars) | Target Terminal |
+| Theme | Aliases | Grid | Scale X | Gap | Min Cols (8 chars) | Best For |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| `large` | `modern`, `big` | 5x7 | 2x | 2 | ~98 | Wide displays / full-screen panes (≥ 100x20) |
-| `medium` | `classic`, `mid` | 5x7 | 1x | 1 | ~49 | Standard terminals (80x24) |
-| `small` | `compact`, `mini` | 3x5 | 1x | 1 | ~33 | Splits, sidebar panes, compact terminals (≥ 45x14) |
-| `auto` | `adaptive`, `fit` | *dynamic* | *dynamic* | *dynamic* | *dynamic* | Evaluates `large` → `medium` → `small` per frame |
+| `large` | `modern`, `big` | 5x7 | 2x | 2 | ~98 | Wide screens, full panes (≥ 100x20). Statement piece. |
+| `medium` | `classic`, `mid` | 5x7 | 1x | 1 | ~49 | Standard 80x24 terminals. Daily driver. |
+| `small` | `compact`, `mini` | 3x5 | 1x | 1 | ~33 | Splits and sidebars (≥ 45x14). Pocket clock. |
+| `auto` | `adaptive`, `fit` | *dynamic* | *dynamic* | *dynamic* | *dynamic* | Indecisive windows. Tries `large` → `medium` → `small` every frame. |
 
 ### Palettes Reference
 
-All palettes use direct 24-bit Truecolor RGB values for uniform appearance regardless of terminal base theme:
+All palettes are hardcoded 24-bit Truecolor RGB, so they look identical no matter what your terminal theme is doing:
 
-| Palette | Aliases | Hours & Minutes | Seconds | Frame & Separators | Date Line |
+| Palette | Aliases | Hours & Minutes | Seconds | Frame | Date |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`black-red`** | `red`, `black_red`, `crimson`, `default` | Vivid Red (`#EF4444`) | Soft Coral (`#FCA5A5`) | Deep Crimson (`#7F1D1D`) | Rose Red (`#F87171`) |
 | **`purple`** | | Vivid Purple (`#A855F7`) | Light Lavender (`#D8B4FE`) | Deep Purple (`#581C87`) | Soft Lilac (`#C084FC`) |
 | **`matrix`** | `matrix-green`, `green` | Terminal Green (`#22C55E`) | Pale Mint (`#86EFAC`) | Dark Phosphor (`#145014`) | Lime Green (`#32CD32`) |
 | **`amber`** | `amber-crt`, `crt` | Warm Amber (`#F59E0B`) | Soft Peach (`#FED7AA`) | Vintage Bronze (`#783C00`) | Golden Amber (`#FBBF24`) |
 | **`monochrome`** | `mono`, `white`, `gray` | Crisp White (`#FFFFFF`) | Silver Gray (`#9CA3AF`) | Slate Gray (`#4B5563`) | Light Gray (`#D1D5DB`) |
-| **`rainbow`** | `spectral`, `colors` | Multi-color spectrum | Violet (`#8B5CF6`) | Indigo (`#6366F1`) | Sunburst Yellow (`#FDE047`) |
+| **`rainbow`** | `spectral`, `colors` | Full spectrum | Violet (`#8B5CF6`) | Indigo (`#6366F1`) | Sunburst Yellow (`#FDE047`) |
 
-> In the `rainbow` palette, every character position receives a distinct chromatic hue from Red (`#EF4444`), Orange (`#F97316`), Yellow (`#EAB308`), Green (`#22C55E`), Cyan (`#06B6D4`), Blue (`#3B82F6`), Violet (`#8B5CF6`), to Pink (`#EC4899`).
+> `rainbow` assigns a different hue to every digit position: Red (`#EF4444`), Orange (`#F97316`), Yellow (`#EAB308`), Green (`#22C55E`), Cyan (`#06B6D4`), Blue (`#3B82F6`), Violet (`#8B5CF6`), Pink (`#EC4899`). It is scientifically impossible to be sad while looking at it.
 
 ---
 
 ## Architecture & Codebase Tour
 
-`xclock` is designed around strict separation of concerns, zero heap churn during steady-state redraws, and minimal external dependencies:
+Clean modules, no heap churn in the hot loop, almost no dependencies. Just how Rust likes it:
 
 ```text
 src/
-├── main.rs       # Entrypoint: dispatches CLI parse results and maps process exit codes (0, 1, 2)
-├── cli.rs        # Hand-rolled zero-dependency CLI parser, flag deduplication, and usage output
-├── app.rs        # 100 ms event loop, live key processing, redraw caching key, and frame render dispatch
-├── terminal.rs   # TerminalGuard RAII guard: raw mode, alternate screen, cursor hiding, and signal cleanup
-├── theme.rs      # Theme & Palette definitions, RGB color mappings, auto_fit geometry resolution
-├── font.rs       # Face (5x7 / 3x5), Style, glyph tables (0-9, colon), and horizontal rasterization
-├── display.rs    # DisplayOptions state, 12h/24h time formatting, meridiem helper, and date formatter
-└── ui.rs         # Dynamic Layout computation, clamping to screen boundaries, and frame buffer rendering
+├── main.rs       # Entrypoint: routes CLI results to exit codes (0, 1, 2)
+├── cli.rs        # Hand-rolled, zero-dependency CLI parser with flag dedup and help text
+├── app.rs        # 100 ms event loop, live key handling, redraw cache key, frame dispatch
+├── terminal.rs   # TerminalGuard RAII: raw mode, alt screen, hidden cursor, signal-safe cleanup
+├── theme.rs      # Theme + Palette definitions, RGB maps, auto_fit geometry solver
+├── font.rs       # 5x7 / 3x5 glyph tables (0-9, colon) and horizontal rasterizer
+├── display.rs    # DisplayOptions, 12h/24h formatting, meridiem logic, date formatter
+└── ui.rs         # Layout math, screen-edge clamping, frame buffer renderer
 ```
 
-### Rendering Pipeline
+### How a Frame Gets Born
 
-1. **Poll & Sleep**: `crossterm::event::poll` blocks for up to 100 ms, serving as an energy-efficient clock tick (~10 FPS max).
-2. **State Key Diffing**: Current render factors `(time, colon_visible, cols, lines, effective_theme, display, palette)` are checked against `last_key`. If the terminal state has not changed visually, frame computation and terminal I/O are completely skipped.
-3. **Layout Solver**: `ui::compute_layout` calculates horizontal and vertical padding to center the clock block within the terminal. If the window is narrower than the requested content, layout clamping prevents text wrapping or terminal scroll distortion.
-4. **Buffered Flush**: All ANSI escape codes and Unicode box characters are written into a `BufWriter<Stdout>`, flushing to the kernel in a single write operation per visible frame to eliminate screen tearing.
+1. **Poll & nap:** `crossterm::event::poll` waits up to 100 ms. That wait *is* the clock tick (~10 FPS ceiling, near-zero idle CPU).
+2. **Diff or ditch:** Build a key from `(time, colon_visible, cols, lines, effective_theme, display, palette)`. Same as last frame? Skip everything. No work is the fastest work.
+3. **Solve layout:** `ui::compute_layout` centers the clock block. Window too narrow? Content gets clamped instead of wrapping and wrecking your scrollback.
+4. **One big flush:** Everything — ANSI codes, box-drawing characters, colors — goes into a `BufWriter<Stdout>` and hits the terminal in a single write. No tearing, no flicker.
 
 ---
 
 ## Development
 
-### Building & Checking
+### Build, Test, Lint
 
 ```bash
-# Build debug binary
+# Debug build for tinkering
 cargo build
 
-# Run comprehensive test suite (53 tests across all modules)
+# Full test suite — 53 tests, all modules
 cargo test
 
-# Run clippy linter (strictly warning-free)
+# Clippy, zero-tolerance mode
 cargo clippy --all-targets
 
-# Run release build
+# Release build for showing off
 cargo build --release
 ```
 
-### Testing Strategy
+### What the Tests Actually Check
 
-The test suite validates:
-- **CLI Parsing**: Long, short, and equal-syntax flags, aliases, default values, priority ordering, and error handling.
-- **Display Formatting**: 12-hour / 24-hour conversions, zero padding, noon/midnight meridiem splits, month names, and weekday names.
-- **Font & Glyph Geometry**: Invariant check ensuring every row of every glyph matches expected width and height, and that rendered line width equals computed layout metrics.
-- **Theme & Palette Lifecycle**: Hotkey collision freedom, color index assignment, auto-fit resolution across varying terminal dimensions, and cyclic palette transitions.
-- **UI & Layout Bounding**: Narrow terminal clamping, padding calculations, box-drawing integrity, and smoke tests across all themes and palettes.
+- **CLI Parsing:** Long/short/equals syntax, aliases, defaults, last-flag-wins, error paths.
+- **Display Formatting:** 12h/24h conversion, zero-padding, noon/midnight edge cases, month + weekday names.
+- **Font Geometry:** Every glyph row is the right width/height, rendered width matches layout math.
+- **Theme & Palette Lifecycle:** No hotkey collisions, correct color indexing, auto-fit across window sizes, palette cycling order.
+- **UI & Layout:** Narrow-terminal clamping, centering padding, box integrity, smoke tests over every theme x palette combo.
 
 ---
 
 ## Dependencies
 
-- [`crossterm 0.29`](https://crates.io/crates/crossterm) — Cross-platform terminal manipulation, raw mode, alternate screen, event polling, and Truecolor styling.
-- [`chrono 0.4`](https://crates.io/crates/chrono) — Local system date, time zone resolution, and calendar calculation.
-- [`ctrlc 3`](https://crates.io/crates/ctrlc) — Cross-platform signal handling to guarantee clean terminal state teardown on `SIGINT`.
+Only three, because restraint is a feature:
+
+- [`crossterm 0.29`](https://crates.io/crates/crossterm) — Raw mode, alternate screen, event polling, Truecolor styling. The terminal whisperer.
+- [`chrono 0.4`](https://crates.io/crates/chrono) — Local time, time zones, calendar math. Knows what day it is so you do not have to.
+- [`ctrlc 3`](https://crates.io/crates/ctrlc) — Catches `SIGINT` so your terminal survives your `Ctrl+C` reflex.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE) for details. Go forth and put a giant glowing clock on everything.
