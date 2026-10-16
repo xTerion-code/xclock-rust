@@ -459,9 +459,15 @@ mod tests {
     fn hotkeys_cover_all_themes_uniquely() {
         let keys: Vec<char> = Theme::all().iter().map(|t| t.hotkey()).collect();
         assert_eq!(keys.len(), 4);
+        let mut unique = keys.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(unique.len(), keys.len(), "theme hotkeys must be unique");
         for t in Theme::all() {
             assert_eq!(Theme::from_hotkey(t.hotkey()), Some(t));
         }
+        // `0` is the documented second hotkey for the auto theme.
+        assert_eq!(Theme::from_hotkey('0'), Some(Theme::Auto));
         assert_eq!(Theme::from_hotkey('q'), None);
         for reserved in ['s', 'h', 'b', 'd', 'q', 'p', 't'] {
             assert!(

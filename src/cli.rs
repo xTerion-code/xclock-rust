@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use crate::display::{DisplayOptions, HourFormat};
 use crate::theme::{Palette, Theme};
 
@@ -23,7 +25,7 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
     let mut blink_colon = true;
     let mut show_date = true;
 
-    let mut it = args.iter().skip(1).peekable();
+    let mut it = args.iter().skip(1);
     while let Some(arg) = it.next() {
         if arg == "-h" || arg == "--help" {
             return Ok(Action::Help);
@@ -57,41 +59,23 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
             let value = it
                 .next()
                 .ok_or_else(|| format!("missing value: `{arg}` expects one of: {}", theme_ids()))?;
-            theme = Theme::from_str(value).ok_or_else(|| {
-                format!("unknown theme `{value}` (expected one of: {})", theme_ids())
-            })?;
+            theme = parse_theme(value)?;
         } else if let Some(value) = arg.strip_prefix("--theme=") {
-            theme = Theme::from_str(value).ok_or_else(|| {
-                format!("unknown theme `{value}` (expected one of: {})", theme_ids())
-            })?;
+            theme = parse_theme(value)?;
         } else if arg == "-p" || arg == "--palette" {
             let value = it.next().ok_or_else(|| {
                 format!("missing value: `{arg}` expects one of: {}", palette_ids())
             })?;
-            palette = Palette::from_str(value).ok_or_else(|| {
-                format!(
-                    "unknown palette `{value}` (expected one of: {})",
-                    palette_ids()
-                )
-            })?;
+            palette = parse_palette(value)?;
         } else if let Some(value) = arg.strip_prefix("--palette=") {
-            palette = Palette::from_str(value).ok_or_else(|| {
-                format!(
-                    "unknown palette `{value}` (expected one of: {})",
-                    palette_ids()
-                )
-            })?;
+            palette = parse_palette(value)?;
         } else if let Some(value) = arg.strip_prefix("--hour-format=") {
-            hour_format = HourFormat::from_str(value).ok_or_else(|| {
-                format!("unknown hour format `{value}` (expected one of: 12, 12h, 24, 24h)")
-            })?;
+            hour_format = parse_hour_format(value)?;
         } else if arg == "--hour-format" {
             let value = it.next().ok_or_else(|| {
                 "missing value: `--hour-format` expects one of: 12, 12h, 24, 24h".to_string()
             })?;
-            hour_format = HourFormat::from_str(value).ok_or_else(|| {
-                format!("unknown hour format `{value}` (expected one of: 12, 12h, 24, 24h)")
-            })?;
+            hour_format = parse_hour_format(value)?;
         } else {
             return Err(format!("unexpected argument `{arg}`"));
         }
@@ -105,6 +89,25 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
         palette,
         display,
     }))
+}
+
+fn parse_theme(value: &str) -> Result<Theme, String> {
+    Theme::from_str(value)
+        .ok_or_else(|| format!("unknown theme `{value}` (expected one of: {})", theme_ids()))
+}
+
+fn parse_palette(value: &str) -> Result<Palette, String> {
+    Palette::from_str(value).ok_or_else(|| {
+        format!(
+            "unknown palette `{value}` (expected one of: {})",
+            palette_ids()
+        )
+    })
+}
+
+fn parse_hour_format(value: &str) -> Result<HourFormat, String> {
+    HourFormat::from_str(value)
+        .ok_or_else(|| format!("unknown hour format `{value}` (expected one of: 12, 12h, 24, 24h)"))
 }
 
 fn theme_ids() -> String {
@@ -153,7 +156,8 @@ pub fn usage() -> String {
 pub fn themes_list() -> String {
     let mut out = String::from("Available themes:\n");
     for t in Theme::all() {
-        out.push_str(&format!("  {:<8} {}\n", t.id(), t.description()));
+        // Writing into a `String` cannot fail.
+        let _ = writeln!(out, "  {:<8} {}", t.id(), t.description());
     }
     out.push_str("\nLive keys: press 1/2/3/a to switch, t to cycle themes, p to cycle palette, s to toggle seconds, h to toggle 12/24h, b to toggle blink, d to toggle date, q or Esc to quit.");
     out
@@ -162,7 +166,8 @@ pub fn themes_list() -> String {
 pub fn palettes_list() -> String {
     let mut out = String::from("Available palettes:\n");
     for p in Palette::all() {
-        out.push_str(&format!("  {:<12} {}\n", p.id(), p.description()));
+        // Writing into a `String` cannot fail.
+        let _ = writeln!(out, "  {:<12} {}", p.id(), p.description());
     }
     out.push_str("\nLive key: press p to cycle palettes.");
     out
@@ -173,7 +178,7 @@ mod tests {
     use super::*;
 
     fn args(v: &[&str]) -> Vec<String> {
-        v.iter().map(|s| s.to_string()).collect()
+        v.iter().map(ToString::to_string).collect()
     }
 
     fn run_config(argv: &[&str]) -> Config {

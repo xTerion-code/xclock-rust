@@ -3,7 +3,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.98%2B-blue.svg)](https://www.rust-lang.org)
 [![Edition](https://img.shields.io/badge/edition-2024-orange.svg)](https://doc.rust-lang.org/edition-guide/rust-2024/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
-[![Tests](https://img.shields.io/badge/tests-48%20passed-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen.svg)](#testing)
 
 A modern, responsive, and lightweight terminal digital clock for Unix environments, built in Rust using [`crossterm`](https://crates.io/crates/crossterm).
 
@@ -221,7 +221,7 @@ src/
 # Build debug binary
 cargo build
 
-# Run comprehensive test suite (48 tests across all modules)
+# Run comprehensive test suite (53 tests across all modules)
 cargo test
 
 # Run clippy linter (strictly warning-free)

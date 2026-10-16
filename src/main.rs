@@ -7,7 +7,13 @@ mod theme;
 mod ui;
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let Ok(args) = std::env::args_os()
+        .map(std::ffi::OsString::into_string)
+        .collect::<Result<Vec<_>, _>>()
+    else {
+        eprintln!("xclock: command-line arguments must be valid UTF-8");
+        std::process::exit(2);
+    };
     match cli::parse(&args) {
         Ok(cli::Action::Help) => println!("{}", cli::usage()),
         Ok(cli::Action::Version) => println!("xclock {}", env!("CARGO_PKG_VERSION")),
