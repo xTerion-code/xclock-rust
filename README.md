@@ -71,7 +71,7 @@ A modern, responsive, and lightweight terminal digital clock for Unix environmen
 ### Build from Source
 
 ```bash
-git clone https://github.com/xTerionsilker/xclock-rust.git xclock
+git clone https://github.com/xTerionsilker/xClock-Rust.git xclock
 cd xclock
 cargo build --release
 ```
