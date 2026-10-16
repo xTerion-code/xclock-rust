@@ -15,6 +15,7 @@ pub enum Theme {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum Palette {
     #[default]
+    BlackRed,
     Purple,
     Matrix,
     Amber,
@@ -23,8 +24,9 @@ pub enum Palette {
 }
 
 impl Palette {
-    pub fn all() -> [Palette; 5] {
+    pub fn all() -> [Palette; 6] {
         [
+            Palette::BlackRed,
             Palette::Purple,
             Palette::Matrix,
             Palette::Amber,
@@ -35,6 +37,7 @@ impl Palette {
 
     pub fn id(self) -> &'static str {
         match self {
+            Palette::BlackRed => "black-red",
             Palette::Purple => "purple",
             Palette::Matrix => "matrix",
             Palette::Amber => "amber",
@@ -45,6 +48,9 @@ impl Palette {
 
     pub fn description(self) -> &'static str {
         match self {
+            Palette::BlackRed => {
+                "black-red: bold red digits on dark framing with soft coral seconds"
+            }
             Palette::Purple => "purple: vivid purple digits on black with light lavender seconds",
             Palette::Matrix => "matrix: classic matrix green phosphor display",
             Palette::Amber => "amber: warm amber CRT phosphor display",
@@ -55,7 +61,8 @@ impl Palette {
 
     pub fn from_str(s: &str) -> Option<Palette> {
         match s.to_lowercase().as_str() {
-            "purple" | "default" => Some(Palette::Purple),
+            "black-red" | "black_red" | "red" | "crimson" | "default" => Some(Palette::BlackRed),
+            "purple" => Some(Palette::Purple),
             "matrix" | "matrix-green" | "matrix_green" | "green" => Some(Palette::Matrix),
             "amber" | "amber-crt" | "amber_crt" | "crt" => Some(Palette::Amber),
             "monochrome" | "mono" | "gray" | "grey" | "white" => Some(Palette::Monochrome),
@@ -66,16 +73,22 @@ impl Palette {
 
     pub fn next(self) -> Palette {
         match self {
+            Palette::BlackRed => Palette::Purple,
             Palette::Purple => Palette::Matrix,
             Palette::Matrix => Palette::Amber,
             Palette::Amber => Palette::Monochrome,
             Palette::Monochrome => Palette::Rainbow,
-            Palette::Rainbow => Palette::Purple,
+            Palette::Rainbow => Palette::BlackRed,
         }
     }
 
     pub fn border(self) -> Color {
         match self {
+            Palette::BlackRed => Color::Rgb {
+                r: 127,
+                g: 29,
+                b: 29,
+            },
             Palette::Purple => Color::Rgb {
                 r: 88,
                 g: 28,
@@ -106,6 +119,11 @@ impl Palette {
 
     pub fn separator(self) -> Color {
         match self {
+            Palette::BlackRed => Color::Rgb {
+                r: 153,
+                g: 27,
+                b: 27,
+            },
             Palette::Purple => Color::Rgb {
                 r: 88,
                 g: 28,
@@ -136,6 +154,11 @@ impl Palette {
 
     pub fn date(self) -> Color {
         match self {
+            Palette::BlackRed => Color::Rgb {
+                r: 248,
+                g: 113,
+                b: 113,
+            },
             Palette::Purple => Color::Rgb {
                 r: 192,
                 g: 132,
@@ -166,6 +189,11 @@ impl Palette {
 
     pub fn hours_minutes(self) -> Color {
         match self {
+            Palette::BlackRed => Color::Rgb {
+                r: 239,
+                g: 68,
+                b: 68,
+            },
             Palette::Purple => Color::Rgb {
                 r: 168,
                 g: 85,
@@ -196,6 +224,11 @@ impl Palette {
 
     pub fn seconds(self) -> Color {
         match self {
+            Palette::BlackRed => Color::Rgb {
+                r: 252,
+                g: 165,
+                b: 165,
+            },
             Palette::Purple => Color::Rgb {
                 r: 216,
                 g: 180,
@@ -473,14 +506,15 @@ mod tests {
     #[test]
     fn palette_all_and_next_cycling() {
         let palettes = Palette::all();
-        assert_eq!(palettes.len(), 5);
-        let mut curr = Palette::Purple;
+        assert_eq!(palettes.len(), 6);
+        let mut curr = Palette::BlackRed;
         let expected = [
+            Palette::Purple,
             Palette::Matrix,
             Palette::Amber,
             Palette::Monochrome,
             Palette::Rainbow,
-            Palette::Purple,
+            Palette::BlackRed,
         ];
         for next in expected {
             curr = curr.next();
@@ -490,8 +524,12 @@ mod tests {
 
     #[test]
     fn palette_parses_ids_and_aliases() {
+        assert_eq!(Palette::from_str("black-red"), Some(Palette::BlackRed));
+        assert_eq!(Palette::from_str("black_red"), Some(Palette::BlackRed));
+        assert_eq!(Palette::from_str("red"), Some(Palette::BlackRed));
+        assert_eq!(Palette::from_str("crimson"), Some(Palette::BlackRed));
+        assert_eq!(Palette::from_str("default"), Some(Palette::BlackRed));
         assert_eq!(Palette::from_str("purple"), Some(Palette::Purple));
-        assert_eq!(Palette::from_str("default"), Some(Palette::Purple));
         assert_eq!(Palette::from_str("Matrix"), Some(Palette::Matrix));
         assert_eq!(Palette::from_str("matrix-green"), Some(Palette::Matrix));
         assert_eq!(Palette::from_str("GREEN"), Some(Palette::Matrix));
@@ -520,6 +558,7 @@ mod tests {
     #[test]
     fn splits_hours_minutes_from_seconds() {
         for palette in [
+            Palette::BlackRed,
             Palette::Purple,
             Palette::Matrix,
             Palette::Amber,

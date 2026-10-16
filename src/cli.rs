@@ -129,7 +129,7 @@ pub fn usage() -> String {
          \n\
          Options:\n  \
            -t, --theme <name>    clock theme (default: large): {}\n  \
-           -p, --palette <name>  color palette (default: purple): {}\n  \
+           -p, --palette <name>  color palette (default: black-red): {}\n  \
            --show-seconds        show seconds (default)\n  \
            --no-seconds          hide seconds\n  \
            --12h                 use 12-hour format\n  \
@@ -191,7 +191,7 @@ mod tests {
     fn defaults_to_large() {
         let c = run_config(&["xclock"]);
         assert_eq!(c.theme, Theme::Large);
-        assert_eq!(c.palette, Palette::Purple);
+        assert_eq!(c.palette, Palette::BlackRed);
         assert!(c.display.show_seconds);
         assert_eq!(c.display.hour_format, HourFormat::H24);
     }
@@ -283,6 +283,18 @@ mod tests {
 
     #[test]
     fn accepts_palette_flags_and_aliases() {
+        assert_eq!(
+            run_config(&["xclock", "--palette", "black-red"]).palette,
+            Palette::BlackRed
+        );
+        assert_eq!(
+            run_config(&["xclock", "-p", "red"]).palette,
+            Palette::BlackRed
+        );
+        assert_eq!(
+            run_config(&["xclock", "--palette=purple"]).palette,
+            Palette::Purple
+        );
         assert_eq!(
             run_config(&["xclock", "--palette", "matrix"]).palette,
             Palette::Matrix

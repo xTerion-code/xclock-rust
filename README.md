@@ -21,8 +21,9 @@ A modern, responsive, and lightweight terminal digital clock for Unix environmen
   - `medium`: Single-width 5x7 block digits for standard terminals.
   - `small`: 3x5 compact digits for small displays and status panes.
   - `auto`: Dynamic layout engine that automatically selects the largest theme that comfortably fits your current terminal dimensions.
-- **5 Truecolor Palettes**:
-  - `purple` *(default)*: Vivid neon purple digits with soft lavender seconds on dark purple framing.
+- **6 Truecolor Palettes**:
+  - `black-red` *(default)*: High-contrast crimson and bold red digits on dark framing with light coral seconds.
+  - `purple`: Vivid neon purple digits with soft lavender seconds on dark purple framing.
   - `matrix`: Classic green phosphor CRT aesthetic inspired by digital rain terminals.
   - `amber`: Warm amber CRT phosphor glow reminiscent of vintage workstations.
   - `monochrome`: Crisp, high-contrast white and silver for minimalist setups.
@@ -108,7 +109,7 @@ xclock -t auto -p rainbow
 | Option | Short | Arguments | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `--theme` | `-t` | `<name>` | `large` | Clock theme: `large`, `medium`, `small`, or `auto`. |
-| `--palette` | `-p` | `<name>` | `purple` | Color palette: `purple`, `matrix`, `amber`, `monochrome`, or `rainbow`. |
+| `--palette` | `-p` | `<name>` | `black-red` | Color palette: `black-red`, `purple`, `matrix`, `amber`, `monochrome`, or `rainbow`. |
 | `--show-seconds` | | *none* | *active* | Display seconds (`HH:MM:SS`). |
 | `--no-seconds`, `--hide-seconds` | | *none* | | Hide seconds (`HH:MM`). |
 | `--24h` | | *none* | *active* | Display time in 24-hour military format (`00`–`23`). |
@@ -148,7 +149,7 @@ While `xclock` is running in raw mode, you can change settings dynamically witho
 | `3` | **Small Theme** | Compact 3x5 face; fits small terminals and window splits down to 45x14. |
 | `a` / `0` | **Auto Theme** | Dynamically adapts theme choice to live terminal width and height. |
 | `t` / `T` | **Cycle Theme** | Cycles sequentially: `large` → `medium` → `small` → `auto` → `large`. |
-| `p` / `P` | **Cycle Palette** | Cycles: `purple` → `matrix` → `amber` → `monochrome` → `rainbow` → `purple`. |
+| `p` / `P` | **Cycle Palette** | Cycles: `black-red` → `purple` → `matrix` → `amber` → `monochrome` → `rainbow` → `black-red`. |
 | `s` / `S` | **Toggle Seconds** | Toggles between `HH:MM:SS` and `HH:MM`. |
 | `h` / `H` | **Toggle 12h / 24h** | Switches between 24-hour mode and 12-hour mode with `AM`/`PM` label. |
 | `b` / `B` | **Toggle Blink** | Toggles colon blinking at 1 Hz vs. static display. |
@@ -176,7 +177,8 @@ All palettes use direct 24-bit Truecolor RGB values for uniform appearance regar
 
 | Palette | Aliases | Hours & Minutes | Seconds | Frame & Separators | Date Line |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`purple`** | `default` | Vivid Purple (`#A855F7`) | Light Lavender (`#D8B4FE`) | Deep Purple (`#581C87`) | Soft Lilac (`#C084FC`) |
+| **`black-red`** | `red`, `black_red`, `crimson`, `default` | Vivid Red (`#EF4444`) | Soft Coral (`#FCA5A5`) | Deep Crimson (`#7F1D1D`) | Rose Red (`#F87171`) |
+| **`purple`** | | Vivid Purple (`#A855F7`) | Light Lavender (`#D8B4FE`) | Deep Purple (`#581C87`) | Soft Lilac (`#C084FC`) |
 | **`matrix`** | `matrix-green`, `green` | Terminal Green (`#22C55E`) | Pale Mint (`#86EFAC`) | Dark Phosphor (`#145014`) | Lime Green (`#32CD32`) |
 | **`amber`** | `amber-crt`, `crt` | Warm Amber (`#F59E0B`) | Soft Peach (`#FED7AA`) | Vintage Bronze (`#783C00`) | Golden Amber (`#FBBF24`) |
 | **`monochrome`** | `mono`, `white`, `gray` | Crisp White (`#FFFFFF`) | Silver Gray (`#9CA3AF`) | Slate Gray (`#4B5563`) | Light Gray (`#D1D5DB`) |
