@@ -8,7 +8,7 @@
 
 **xclock** (*x* clock) is a terminal digital clock written in Rust on top of [`crossterm`](https://crates.io/crates/crossterm), drawing bold typographic block-digit clockfaces inside a rounded Unicode frame. It combines real-time responsive layout adaptation, six truecolor CRT/phosphor palettes, flexible time and date formatting, and live keyboard controls — all rendered flicker-free with single-flush buffered output.
 
-Current version is **0.1.0**. The whole UI follows a typographic pixel-craft aesthetic: hand-authored 5x7 and 3x5 glyph tables, box-drawing frames, and 24-bit truecolor palettes that render identically regardless of the terminal's own color scheme.
+Current version is **1.0.0**. The whole UI follows a typographic pixel-craft aesthetic: hand-authored 5x7 and 3x5 glyph tables, box-drawing frames, and 24-bit truecolor palettes that render identically regardless of the terminal's own color scheme.
 
 ---
 
