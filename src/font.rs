@@ -27,6 +27,44 @@ pub struct Style {
     pub gap_x: usize,
 }
 
+/// Which optional parts of the framed face are currently visible.
+///
+/// Geometry calculations take this single description instead of loose
+/// booleans, so the width budget, the height budget and the render pass can
+/// never disagree about what the frame is supposed to contain.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "three independent visibility flags"
+)]
+pub struct FaceLayout {
+    pub seconds: bool,
+    pub date: bool,
+    pub hint: bool,
+}
+
+impl FaceLayout {
+    pub const fn new(seconds: bool, date: bool, hint: bool) -> Self {
+        Self {
+            seconds,
+            date,
+            hint,
+        }
+    }
+
+    /// Characters in the rendered time string: `HH:MM:SS` or `HH:MM`.
+    pub const fn clock_chars(self) -> usize {
+        if self.seconds { 8 } else { 5 }
+    }
+
+    /// Total frame height in terminal rows: top border, one blank row, the
+    /// digit face, one blank row, the optional date row, the optional hint
+    /// row, one blank row, bottom border.
+    pub const fn rows(self, face_height: usize) -> usize {
+        face_height + 5 + self.date as usize + self.hint as usize
+    }
+}
+
 pub fn line_width(n_chars: usize, style: Style) -> usize {
     let rendered_w = style.face.glyph_w() * style.scale_x;
     n_chars * rendered_w + n_chars.saturating_sub(1) * style.gap_x
@@ -40,17 +78,7 @@ pub fn render_big(time: &str, colon_visible: bool, style: Style) -> Vec<String> 
         r.reserve(width * 4);
     }
     for (i, ch) in chars.iter().enumerate() {
-        let (b_g, c_g);
-        let glyph_rows: &[&str] = match style.face {
-            Face::Block => {
-                b_g = block_glyph(*ch, colon_visible);
-                &b_g
-            }
-            Face::Compact => {
-                c_g = compact_glyph(*ch, colon_visible);
-                &c_g
-            }
-        };
+        let glyph_rows = glyph_rows(*ch, colon_visible, style);
         for (r, glyph_row) in glyph_rows.iter().enumerate() {
             for c in glyph_row.chars() {
                 for _ in 0..style.scale_x {
@@ -67,9 +95,18 @@ pub fn render_big(time: &str, colon_visible: bool, style: Style) -> Vec<String> 
     rows
 }
 
-fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
+/// Bitmap rows for one character, or a blank glyph for anything the face does
+/// not define (spaces, and the colon while it is blinked off).
+fn glyph_rows(ch: char, colon_visible: bool, style: Style) -> &'static [&'static str] {
+    match style.face {
+        Face::Block => block_glyph(ch, colon_visible),
+        Face::Compact => compact_glyph(ch, colon_visible),
+    }
+}
+
+fn block_glyph(ch: char, colon_visible: bool) -> &'static [&'static str] {
     match ch {
-        '0' => [
+        '0' => &[
             " ███ ",
             "█   █",
             "█   █",
@@ -78,7 +115,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "█   █",
             " ███ ",
         ],
-        '1' => [
+        '1' => &[
             "  █  ",
             " ██  ",
             "  █  ",
@@ -87,7 +124,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "  █  ",
             "█████",
         ],
-        '2' => [
+        '2' => &[
             "█████",
             "    █",
             "    █",
@@ -96,7 +133,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "█    ",
             "█████",
         ],
-        '3' => [
+        '3' => &[
             "█████",
             "    █",
             "    █",
@@ -105,7 +142,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "    █",
             "█████",
         ],
-        '4' => [
+        '4' => &[
             "█   █",
             "█   █",
             "█   █",
@@ -114,7 +151,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "    █",
             "    █",
         ],
-        '5' => [
+        '5' => &[
             "█████",
             "█    ",
             "█    ",
@@ -123,7 +160,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "    █",
             "█████",
         ],
-        '6' => [
+        '6' => &[
             "█████",
             "█    ",
             "█    ",
@@ -132,7 +169,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "█   █",
             "█████",
         ],
-        '7' => [
+        '7' => &[
             "█████",
             "    █",
             "    █",
@@ -141,7 +178,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "  █  ",
             "  █  ",
         ],
-        '8' => [
+        '8' => &[
             " ███ ",
             "█   █",
             "█   █",
@@ -150,7 +187,7 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "█   █",
             " ███ ",
         ],
-        '9' => [
+        '9' => &[
             "█████",
             "█   █",
             "█   █",
@@ -159,101 +196,29 @@ fn block_glyph(ch: char, colon_visible: bool) -> [&'static str; 7] {
             "    █",
             "█████",
         ],
-        ':' if colon_visible => [
+        ':' if colon_visible => &[
             "     ", "     ", "  ▮  ", "     ", "     ", "  ▮  ", "     ",
         ],
-        _ => [
+        _ => &[
             "     ", "     ", "     ", "     ", "     ", "     ", "     ",
         ],
     }
 }
 
-fn compact_glyph(ch: char, colon_visible: bool) -> [&'static str; 5] {
+fn compact_glyph(ch: char, colon_visible: bool) -> &'static [&'static str] {
     match ch {
-        '0' => [
-            "███",
-            "█ █",
-            "█ █",
-            "█ █",
-            "███",
-        ],
-        '1' => [
-            " █ ",
-            "██ ",
-            " █ ",
-            " █ ",
-            "███",
-        ],
-        '2' => [
-            "███",
-            "  █",
-            "███",
-            "█  ",
-            "███",
-        ],
-        '3' => [
-            "███",
-            "  █",
-            "███",
-            "  █",
-            "███",
-        ],
-        '4' => [
-            "█ █",
-            "█ █",
-            "███",
-            "  █",
-            "  █",
-        ],
-        '5' => [
-            "███",
-            "█  ",
-            "███",
-            "  █",
-            "███",
-        ],
-        '6' => [
-            "███",
-            "█  ",
-            "███",
-            "█ █",
-            "███",
-        ],
-        '7' => [
-            "███",
-            "  █",
-            " █ ",
-            " █ ",
-            " █ ",
-        ],
-        '8' => [
-            "███",
-            "█ █",
-            "███",
-            "█ █",
-            "███",
-        ],
-        '9' => [
-            "███",
-            "█ █",
-            "███",
-            "  █",
-            "███",
-        ],
-        ':' if colon_visible => [
-            "   ",
-            " ▮ ",
-            "   ",
-            " ▮ ",
-            "   ",
-        ],
-        _ => [
-            "   ",
-            "   ",
-            "   ",
-            "   ",
-            "   ",
-        ],
+        '0' => &["███", "█ █", "█ █", "█ █", "███"],
+        '1' => &[" █ ", "██ ", " █ ", " █ ", "███"],
+        '2' => &["███", "  █", "███", "█  ", "███"],
+        '3' => &["███", "  █", "███", "  █", "███"],
+        '4' => &["█ █", "█ █", "███", "  █", "  █"],
+        '5' => &["███", "█  ", "███", "  █", "███"],
+        '6' => &["███", "█  ", "███", "█ █", "███"],
+        '7' => &["███", "  █", " █ ", " █ ", " █ "],
+        '8' => &["███", "█ █", "███", "█ █", "███"],
+        '9' => &["███", "█ █", "███", "  █", "███"],
+        ':' if colon_visible => &["   ", " ▮ ", "   ", " ▮ ", "   "],
+        _ => &["   ", "   ", "   ", "   ", "   "],
     }
 }
 
@@ -308,6 +273,20 @@ mod tests {
     }
 
     #[test]
+    fn glyph_rows_dispatch_on_face() {
+        for ch in all_glyph_inputs() {
+            assert_eq!(
+                glyph_rows(ch, true, BLOCK_STYLE).len(),
+                Face::Block.glyph_h()
+            );
+            assert_eq!(
+                glyph_rows(ch, true, COMPACT_STYLE).len(),
+                Face::Compact.glyph_h()
+            );
+        }
+    }
+
+    #[test]
     fn rendered_width_matches_line_width() {
         for style in [BLOCK_STYLE, COMPACT_STYLE] {
             for time in ["", "1", "12:34:56"] {
@@ -347,5 +326,19 @@ mod tests {
             line_width(8, BLOCK_STYLE),
             8 * Face::Block.glyph_w() * 2 + 7 * 2
         );
+    }
+
+    #[test]
+    fn face_layout_counts_clock_chars_and_rows() {
+        let full = FaceLayout::new(true, true, true);
+        assert_eq!(full.clock_chars(), 8);
+        assert_eq!(full.rows(7), 14);
+        let minimal = FaceLayout::new(false, false, false);
+        assert_eq!(minimal.clock_chars(), 5);
+        assert_eq!(minimal.rows(7), 12);
+        // Every optional row contributes exactly one line.
+        assert_eq!(FaceLayout::new(true, false, false).rows(7), 12);
+        assert_eq!(FaceLayout::new(true, true, false).rows(7), 13);
+        assert_eq!(FaceLayout::new(true, false, true).rows(7), 13);
     }
 }

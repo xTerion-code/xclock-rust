@@ -1,10 +1,10 @@
 # xclock — Rust Terminal Digital Clock
 
-[![Rust](https://img.shields.io/badge/Rust-1.98%2B-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/Rust-1.85%2B-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![Edition](https://img.shields.io/badge/Edition-2024-orange?style=for-the-badge&logo=rust&logoColor=white)](https://doc.rust-lang.org/edition-guide/rust-2024/)
 [![Terminal](https://img.shields.io/badge/Terminal-TUI-41CD52?style=for-the-badge&logo=gnome-terminals&logoColor=white)](https://gnome-terminal.org/)
 [![License](https://img.shields.io/badge/License-MIT-b91c1c?style=for-the-badge&logo=open-source-initiative&logoColor=white)](https://github.com/xTerionsilker/xClock-Rust)
-[![Tests](https://img.shields.io/badge/tests-53%20passed-4CAF50?style=for-the-badge&logo=rust&logoColor=white)](https://github.com/xTerionsilker/xClock-Rust)
+[![CI](https://img.shields.io/badge/CI-fmt%20%2B%20clippy%20%2B%20tests-4CAF50?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/xTerionsilker/xClock-Rust/actions/workflows/ci.yml)
 
 **xclock** (*x* clock) is a terminal digital clock written in Rust on top of [`crossterm`](https://crates.io/crates/crossterm), drawing bold typographic block-digit clockfaces inside a rounded Unicode frame. It combines real-time responsive layout adaptation, six truecolor CRT/phosphor palettes, flexible time and date formatting, and live keyboard controls — all rendered flicker-free with single-flush buffered output.
 
@@ -17,13 +17,13 @@ Current version is **0.1.0**. The whole UI follows a typographic pixel-craft aes
 - [Features](#features)
 - [Preview](#preview)
 - [Architecture & Codebase Tour](#architecture--codebase-tour)
+- [Graceful Degradation](#graceful-degradation)
 - [Requirements](#requirements)
 - [Installation & Build](#installation--build)
   - [1. Build from Source](#1-build-from-source)
   - [2. Install to Cargo Bin Path](#2-install-to-cargo-bin-path)
 - [Configuration](#configuration)
   - [Command-Line Options](#command-line-options)
-  - [Options Reference](#options-reference)
   - [Exit Codes](#exit-codes)
 - [Interactive Live Controls](#interactive-live-controls)
 - [Themes and Palettes Catalog](#themes-and-palettes-catalog)
@@ -49,6 +49,7 @@ Current version is **0.1.0**. The whole UI follows a typographic pixel-craft aes
   - `medium`: Single-width 5x7 block digits for standard terminals.
   - `small`: 3x5 compact digits for small displays and status panes.
   - `auto`: Layout engine that resolves the largest theme fitting the current terminal dimensions on every frame.
+  - Any theme that does not fit the current window degrades to the largest one that does, so digits are never clipped (see [Graceful Degradation](#graceful-degradation)).
 - **6 Truecolor Palettes**:
   - `black-red` *(default)*: High-contrast crimson and red digits on dark framing with light coral seconds.
   - `purple`: Neon purple digits with lavender seconds on dark purple framing.
@@ -56,16 +57,20 @@ Current version is **0.1.0**. The whole UI follows a typographic pixel-craft aes
   - `amber`: Warm amber CRT phosphor glow.
   - `monochrome`: White and silver for minimalist configurations.
   - `rainbow`: Spectral coloring across each digit position.
-- **Interactive Live Controls**: Switch themes (`1`/`2`/`3`/`a`/`0`), cycle themes (`t`), cycle palettes (`p`), toggle seconds (`s`), switch 12h/24h format (`h`), toggle colon blinking (`b`), and toggle date display (`d`) — all without a restart.
+- **Interactive Live Controls**: Switch themes (`1`/`2`/`3`/`a`/`0`), cycle themes (`t`), cycle palettes (`p`), toggle seconds (`s`), switch 12h/24h format (`h`), toggle colon blinking (`b`), toggle date display (`d`), and toggle the hint row (`i`) — all without a restart.
 - **Time and Date**:
   - 24-hour or 12-hour format with `AM`/`PM` indicator.
   - Optional seconds display (`HH:MM:SS` or `HH:MM`).
-  - 1 Hz colon pulse (500 ms on / 500 ms off) or steady display.
+  - Colon pulse at 2 Hz (500 ms on / 500 ms off, one full cycle per second) or steady display.
   - Date line with full month name, day, year, and weekday.
+- **Adaptive Hint Row**: The live-keys reminder is printed in full when it fits, shortened when it does not, and removed from the frame entirely (height included) when even the short form would be cut. `--no-hint` removes it unconditionally.
 - **Performance and Terminal Lifecycle**:
-  - **Flicker-Free Rendering**: Single-flush buffered output (`BufWriter`) with state-diff change detection (~10 Hz polling, redundant redraws skipped entirely).
-  - **RAII Cleanup**: Raw mode and alternate screen management via `TerminalGuard`, ensuring cursor and screen restoration including on abort, `Ctrl+C`, or panic unwind.
-  - **Viewport Safety**: The framed block is clamped to the live terminal size, preventing wrapping, scrolling, or panics on short panes.
+  - **Flicker-Free Rendering**: Single-flush buffered output (`BufWriter`) with state-diff change detection. The loop sleeps until the exact instant the next frame *can* differ, and a frame that would be identical is not drawn at all. Idle CPU is 0.0%.
+  - **Rectangle Erasing**: Only the rows that the previous and the next frame share are erased. The screen is cleared exactly once, on the first frame, so toggling an option does not flash.
+  - **RAII Cleanup**: Raw mode, alternate screen, cursor visibility, keyboard-enhancement flags and the panic hook are all owned by `TerminalGuard`, which restores the terminal on normal exit, on error and during panic unwind.
+  - **Signal Safety**: SIGINT, SIGTERM and SIGHUP all exit cleanly, so a supervisor or a closing window cannot leave the shell in raw mode.
+  - **Repeat-Safe Input**: A held key is applied once, not thirty times: `xclock` requests `REPORT_EVENT_TYPES` and falls back to a short window on terminals that decline.
+  - **Viewport Safety**: The framed block is clamped to the live terminal size and a face that does not fit is replaced, never clipped. No wrapping, scrolling or panics on short panes.
 
 ---
 
@@ -85,7 +90,7 @@ Current version is **0.1.0**. The whole UI follows a typographic pixel-craft aes
 │    ██████████  ██████████              ██████████          ██              ██████████  ██████████    │
 │                                                                                                      │
 │                                    October 14, 2026 · Wednesday                                      │
-│               1/2/3/a theme · p palette · s seconds · h 12/24h · b blink · d date · q quit           │
+│    1/2/3/a theme · p palette · s seconds · h 12/24h · b blink · d date · i hint · q quit           │
 │                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -96,31 +101,73 @@ Current version is **0.1.0**. The whole UI follows a typographic pixel-craft aes
 
 ↑ [Table of Contents](#table-of-contents)
 
-`xclock` follows a strict separation of concerns, avoids heap allocation during steady-state redraws, and keeps external dependencies to a minimum:
+`xclock` follows a strict separation of concerns with a single dependency direction and only three external dependencies:
 
 ```text
 xClock/
-├── Cargo.toml                 # Crate manifest: edition 2024, three dependencies, no build scripts
+├── Cargo.toml             # Crate manifest: edition 2024, rust-version 1.85, no build scripts
+├── rust-toolchain.toml    # Pinned toolchain with rustfmt and clippy
 └── src/
     ├── main.rs       # Entrypoint: maps CLI parse results onto process exit codes (0, 1, 2)
-    ├── cli.rs        # Hand-rolled zero-dependency CLI parser, flag deduplication, usage output
-    ├── app.rs        # 100 ms event loop, live key processing, redraw cache key, render dispatch
-    ├── terminal.rs   # TerminalGuard RAII guard: raw mode, alternate screen, cursor hiding, signal cleanup
-    ├── theme.rs      # Theme and Palette definitions, RGB color mappings, auto_fit geometry resolution
-    ├── font.rs       # Face (Block 5x7 / Compact 3x5), Style, glyph tables (0-9, colon), rasterization
-    ├── display.rs    # DisplayOptions state, 12h/24h time formatting, meridiem helper, date formatter
-    └── ui.rs         # Dynamic Layout computation, clamping to screen boundaries, frame buffer rendering
+    ├── cli.rs        # Hand-rolled zero-dependency CLI parser, last-flag-wins, usage and catalog output
+    ├── app.rs        # Event loop, live key processing, frame cache, rectangle erasing, render dispatch
+    ├── terminal.rs   # TerminalGuard RAII guard: raw mode, alternate screen, cursor, key flags, panic hook
+    ├── theme.rs      # Theme/ResolvedTheme, const Palette colour table, fit budgets, auto_fit resolution
+    ├── font.rs       # Face (Block 5x7 / Compact 3x5), Style, FaceLayout, glyph tables (0-9, colon), rasterization
+    ├── display.rs    # DisplayOptions state, TimeFace, 12h/24h time formatting, meridiem and date formatters
+    ├── parse.rs      # Shared ParseError used by every FromStr implementation
+    └── ui.rs         # Layout computation, clamping to screen boundaries, hint selection, frame rendering
 ```
+
+Three invariants carry most of the weight:
+
+- **`FaceLayout` describes the frame once.** Every optional element — seconds, date, hint — is described in a single value derived from `DisplayOptions::face()`, so the width budget, the height budget and the render pass cannot disagree about what the frame contains.
+- **Only `ResolvedTheme` carries geometry.** `Theme::Auto` has no face of its own; `Theme::resolve` produces a `ResolvedTheme` that layout and font code accept, which makes "used the auto theme's geometry by mistake" unrepresentable.
+- **Frames are erased by rectangle.** The renderer remembers the rectangle the last frame occupied and erases only the union with the new one. `Clear(All)` runs exactly once, on the first frame.
+
+`IDEA.md` documents these rules and the reasoning behind them for future contributors.
 
 ### Rendering Pipeline
 
 ↑ [Table of Contents](#table-of-contents)
 
-1. **Poll and Wait**: `crossterm::event::poll` blocks for up to 100 ms, serving as an energy-efficient clock tick (~10 FPS ceiling).
-2. **Key Drain**: Any burst of pending events is drained with a zero-timeout `poll` before rendering, so fast keypresses are never dropped.
-3. **State Key Diffing**: The current render factors `(time, colon_visible, cols, lines, effective_theme, display, palette)` are compared against `last_key`. If no visual change is detected, layout computation and terminal I/O are skipped entirely.
-4. **Layout Solver**: `ui::compute_layout` calculates horizontal and vertical padding to center the clock block. The inner width is clamped to `cols - 2` so the frame never wraps.
-5. **Buffered Flush**: All ANSI escape codes and Unicode box characters are written into a `BufWriter<Stdout>` and flushed in a single write per visible frame, eliminating screen tearing.
+1. **Wait for the Next Visible Change**: `crossterm::event::poll` blocks until either input arrives or the next instant at which the picture could change — the next blink edge, or the next second when blinking is off. Sleeping to the boundary keeps digit dwell times even instead of drifting by up to a poll interval. The wait is capped at 500 ms so resize events are always noticed.
+2. **Key Drain and Repeat Filter**: Any burst of pending events is drained with a zero-timeout `poll` before rendering, so a fast sequence of presses is applied in full. `RepeatFilter` discards `Repeat` and `Release` events and latches a key until its release arrives; terminals that do not report event types resend the raw byte, so a short window catches those.
+3. **State Key Diffing**: The current render factors `(time, colon_visible, cols, lines, resolved_theme, display, palette, mode)` are compared against the last drawn frame. If nothing visible changed, not a single byte is written.
+4. **Layout Solver**: `ui::compute_layout` centers the block and clamps the inner width to `cols - 2`. The hint row is selected here: the longest reminder that fits, or none at all, in which case it is also dropped from the height budget.
+5. **Rectangle Erasing**: The rows shared with the previously drawn frame are erased with `Clear(UntilNewLine)`, then the new frame is written from the top-left corner.
+6. **Buffered Flush**: All ANSI escape codes and Unicode box characters go into a `BufWriter<Stdout>` and are flushed in a single write per visible frame.
+
+Time formatting allocates a handful of small `String`s per frame — the digits, the date and the reminder are built at render time rather than cached, which keeps the code free of a stale-state class of bugs. That is a few kilobytes of garbage per second at most, and the idle process still measures 0.0% CPU because unchanged frames skip the rendering entirely.
+
+---
+
+## Graceful Degradation
+
+`xclock` never draws a broken frame. Whenever the live terminal is too small
+for the requested clockface, it steps down in defined stages:
+
+| Stage | Condition | Result |
+| :--- | :--- | :--- |
+| 1. Theme degradation | The requested theme needs more columns or rows than the window has. | The largest theme that fits is drawn instead (`large` → `medium` → `small`). |
+| 2. Hint degradation | The full live-keys reminder does not fit inside the frame. | A shorter reminder is printed in full. |
+| 3. Hint removal | Not even the short reminder fits, or `--no-hint` was passed. | The row disappears and the frame loses one row. |
+| 4. Plain fallback | No clockface fits at all. | A single centred `HH:MM:SS` line is drawn without a frame. |
+
+This is why `xclock` on a stock 80x24 terminal with the default `large` theme
+renders the `medium` face instead of clipping digits: the digits are never cut
+off, and the framed layout is only abandoned when no face fits.
+
+The fit budgets are computed, not guessed:
+
+| Theme | Clock width (8 chars) | Minimum columns | Minimum rows (with date and hint) |
+| :--- | ---: | ---: | ---: |
+| `large` | 94 | 98 | 14 |
+| `medium` | 47 | 51 | 14 |
+| `small` | 31 | 35 | 12 |
+
+Hiding seconds frees 36 columns on every theme; hiding the date and the hint
+frees two rows. `--minimal` (`--no-hint --no-date`) gives the smallest frame.
 
 ---
 
@@ -132,14 +179,14 @@ xClock/
 
 ↑ [Table of Contents](#table-of-contents)
 
-- **Rust Toolchain**: Rust `1.98+` with Cargo (edition `2024`).
+- **Rust Toolchain**: Rust `1.85+` with Cargo (edition `2024`). The pinned toolchain in `rust-toolchain.toml` supplies `rustfmt` and `clippy`; `rustup` installs it automatically on first build.
 - A POSIX-like environment (Linux, macOS, BSD, WSL) providing a TTY and a C toolchain for the `crossterm` dependency.
 
 ### Runtime Dependencies
 
 ↑ [Table of Contents](#table-of-contents)
 
-- **Terminal Emulator**: UTF-8 encoding and 24-bit Truecolor support (`COLORTERM=truecolor` or `24bit`) — e.g. Alacritty, Kitty, WezTerm, iTerm2, GNOME Terminal, Foot.
+- **Terminal Emulator**: UTF-8 encoding and 24-bit Truecolor support (`COLORTERM=truecolor` or `24bit`) — e.g. Alacritty, Kitty, WezTerm, iTerm2, GNOME Terminal, Foot. Terminals that implement the [kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) get exact key-repeat handling; the others still work.
 - **No runtime binaries**: `xclock` spawns no external processes and reads no configuration files — everything is driven by CLI flags and live hotkeys.
 
 ---
@@ -197,10 +244,12 @@ echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
 | `--24h` | | *none* | *enabled* | Display time in 24-hour format (`00`–`23`). |
 | `--12h` | | *none* | | Display time in 12-hour format (`01`–`12`) with `AM`/`PM` on the date line. |
 | `--hour-format` | | `<12\|24>` | `24` | Explicit hour format (`12`, `12h`, `24`, `24h`). |
-| `--blink` | | *none* | *enabled* | Blink colon separators at 1 Hz. |
+| `--blink` | | *none* | *enabled* | Blink colon separators: 500 ms on, 500 ms off. |
 | `--no-blink` | | *none* | | Display colon separators steadily. |
 | `--show-date` | | *none* | *enabled* | Show the date line below the clock face. |
 | `--no-date`, `--hide-date` | | *none* | | Hide the date line, reducing frame height. |
+| `--show-hint` | | *none* | *enabled* | Show the live-keys reminder row at the bottom of the frame. |
+| `--no-hint`, `--hide-hint`, `--minimal` | | *none* | | Remove the reminder row entirely, shrinking the frame. |
 | `--list-themes` | | *none* | | List available themes with descriptions and exit. |
 | `--list-palettes` | | *none* | | List available color palettes with descriptions and exit. |
 | `--version` | `-v`, `-V` | *none* | | Display version information and exit. |
@@ -261,13 +310,23 @@ While `xclock` is running in raw mode, settings can be modified without a restar
 | `p` / `P` | **Cycle Palette** | Cycles: `black-red` → `purple` → `matrix` → `amber` → `monochrome` → `rainbow` → `black-red`. |
 | `s` / `S` | **Toggle Seconds** | Toggles between `HH:MM:SS` and `HH:MM`. |
 | `h` / `H` | **Toggle 12h / 24h** | Switches between 24-hour mode and 12-hour mode with `AM`/`PM` label. |
-| `b` / `B` | **Toggle Blink** | Toggles colon blinking at 1 Hz versus static display. |
+| `b` / `B` | **Toggle Blink** | Toggles the colon pulse (500 ms on / 500 ms off) versus a static display. |
 | `d` / `D` | **Toggle Date** | Toggles date display, dynamically adjusting frame height. |
+| `i` / `I` | **Toggle Hint** | Shows or removes the live-keys row. Recommended for wallpapers and tiny panes. |
 | `q` / `Q` / `Esc` | **Quit** | Restores the terminal cursor, leaves the alternate screen, and exits. |
 | `Ctrl+C` | **Quit** | Handled both as a raw key event and through a `ctrlc` signal handler for safe exit. |
+
+Holding a key applies it once. `xclock` requests `REPORT_EVENT_TYPES` from the
+terminal so auto-repeat arrives as explicit `Repeat` events, and falls back to
+a short suppression window on terminals that decline the request.
 | `Ctrl+D` | **Quit** | Standard EOF exit in raw mode. |
 
-The active keys are always visible in the hint line rendered at the bottom of the frame, so no external cheat sheet is required.
+The active keys are visible in the hint row at the bottom of the frame, so no external cheat sheet is required. The row prints in full when it fits, shortens itself when it does not, and is dropped from the frame entirely when even the short form would be cut off:
+
+```text
+wide:    1/2/3/a theme · p palette · s seconds · h 12/24h · b blink · d date · i hint · q quit
+narrow:  1/2/3 theme · p palette · i hint · q quit
+```
 
 ---
 
@@ -281,12 +340,12 @@ The active keys are always visible in the hint line rendered at the bottom of th
 
 | Theme | Aliases | Face Grid | Scale X | Character Gap | Min Cols (8 chars) | Target Terminal |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| `large` | `modern`, `big` | 5x7 | 2x | 2 | ~98 | Wide displays / full-screen panes (≥ 100x20) |
-| `medium` | `classic`, `mid` | 5x7 | 1x | 1 | ~49 | Standard terminals (80x24) |
-| `small` | `compact`, `mini` | 3x5 | 1x | 1 | ~33 | Splits, sidebar panes, compact terminals (≥ 45x14) |
+| `large` | `modern`, `big` | 5x7 | 2x | 2 | 98 | Wide displays / full-screen panes (≥ 100x20) |
+| `medium` | `classic`, `mid` | 5x7 | 1x | 1 | 51 | Standard terminals (80x24) |
+| `small` | `compact`, `mini` | 3x5 | 1x | 1 | 35 | Splits, sidebar panes, compact terminals (≥ 45x14) |
 | `auto` | `adaptive`, `fit` | *dynamic* | *dynamic* | *dynamic* | *dynamic* | Evaluates `large` → `medium` → `small` per frame |
 
-`auto` resolves against the *effective* width, which changes when seconds are hidden: an 80x24 terminal with `--no-seconds` is wide enough for `large`.
+`auto` resolves against the *effective* width, which changes when seconds are hidden: an 80x24 terminal with `--no-seconds` is wide enough for `large`. The same applies to an explicitly requested theme — see [Graceful Degradation](#graceful-degradation).
 
 ### Palettes Reference
 
@@ -298,8 +357,8 @@ All palettes use direct 24-bit Truecolor RGB values for consistent appearance re
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`black-red`** | `red`, `black_red`, `crimson`, `default` | Vivid Red (`#EF4444`) | Soft Coral (`#FCA5A5`) | Deep Crimson (`#7F1D1D`) | Rose Red (`#F87171`) |
 | **`purple`** | — | Vivid Purple (`#A855F7`) | Light Lavender (`#D8B4FE`) | Deep Purple (`#581C87`) | Soft Lilac (`#C084FC`) |
-| **`matrix`** | `matrix-green`, `green` | Terminal Green (`#22C55E`) | Pale Mint (`#86EFAC`) | Dark Phosphor (`#145014`) | Lime Green (`#32CD32`) |
-| **`amber`** | `amber-crt`, `crt` | Warm Amber (`#F59E0B`) | Soft Peach (`#FED7AA`) | Vintage Bronze (`#783C00`) | Golden Amber (`#FBBF24`) |
+| **`matrix`** | `matrix-green`, `matrix_green`, `green` | Terminal Green (`#22C55E`) | Pale Mint (`#86EFAC`) | Dark Phosphor (`#145014`) | Lime Green (`#32CD32`) |
+| **`amber`** | `amber-crt`, `amber_crt`, `crt` | Warm Amber (`#F59E0B`) | Soft Peach (`#FED7AA`) | Vintage Bronze (`#783C00`) | Golden Amber (`#FBBF24`) |
 | **`monochrome`** | `mono`, `white`, `gray`, `grey` | Crisp White (`#FFFFFF`) | Silver Gray (`#9CA3AF`) | Slate Gray (`#4B5563`) | Light Gray (`#D1D5DB`) |
 | **`rainbow`** | `spectral`, `colors`, `color` | Multi-color spectrum | Violet (`#8B5CF6`) | Indigo (`#6366F1`) | Sunburst Yellow (`#FDE047`) |
 
@@ -329,7 +388,13 @@ echo "${COLORTERM:-unset}"   # expect: truecolor | 24bit
 
 # 5. Smoke-test rendering in a throwaway pane, then quit with q
 xclock -t medium -p matrix
+
+# 6. Check graceful degradation: the same binary on a narrow window
+xclock -t large -p black-red --no-hint --no-date
 ```
+
+`xclock` reacts to live resizing, so the narrowest case is easiest to verify by
+dragging the window smaller and watching the theme step down.
 
 ---
 
@@ -341,11 +406,15 @@ xclock -t medium -p matrix
 |---|---|---|
 | `unknown theme ...` / `unknown palette ...` | The value is not a documented id or alias. | Run `xclock --list-themes` / `xclock --list-palettes` and use one of the printed ids. |
 | `missing value: --theme expects one of ...` | A flag that requires a parameter was passed without one. | Provide the value in either `--theme=medium` or `-t medium` form. |
-| Frame wraps, text scrolls, or the clock is clipped | The terminal is narrower or shorter than the active theme requires. | Switch to a smaller theme (`2` or `3`) or enable the `auto` theme (`a`). |
+| Frame wraps, text scrolls, or the clock is clipped | Should not happen: a theme that does not fit is replaced automatically. If you see it, please [open an issue](https://github.com/xTerionsilker/xClock-Rust/issues). | Press `a` for the `auto` theme, or `2`/`3` to pick a smaller face deliberately. |
+| The theme is not the one that was requested | The requested theme does not fit the current window, so `xclock` degraded to the largest face that does. | Widen the window, hide seconds with `s`, or run `xclock --minimal` for the smallest frame. |
+| The live-keys row is missing | Not even the short reminder fits, or `--no-hint` is in effect. | Press `i` to toggle it, or widen the terminal. |
+| A held key toggles twice in a row | The terminal does not report key event types, so repeat arrives as a repeated byte and only the fallback suppression window applies. | Update the terminal emulator; on modern terminals the action is applied exactly once. |
 | Colors look wrong or washed out | The terminal does not advertise 24-bit Truecolor. | Check `COLORTERM=truecolor`; otherwise use the `monochrome` palette. |
 | Garbled digits or frame characters | The terminal does not support UTF-8 / box-drawing glyphs. | Switch to a UTF-8 capable terminal such as Alacritty, Kitty, or WezTerm. |
-| Terminal left in raw mode after a crash | The process was killed with `SIGKILL`, which cannot be trapped. | Run `reset` or `stty sane` in the affected shell. |
+| Terminal left in raw mode after a crash | The process was killed with `SIGKILL`, `SIGSTOP` or `SIGQUIT`, which are not trapped. Every other exit path — `q`, `Esc`, `Ctrl+C`, `Ctrl+D`, `SIGINT`, `SIGTERM`, `SIGHUP` and a panic — restores the terminal. | Run `reset` or `stty sane` in the affected shell. |
 | Seconds or colon look static | Blinking is disabled, or the display updates too fast to notice. | Press `b` to toggle blinking and `s` to toggle seconds. |
+| Digits are clipped at the frame edge | A regression; `xclock` degrades the theme instead of clipping. | Please [open an issue](https://github.com/xTerionsilker/xClock-Rust/issues) with your terminal size. |
 
 ---
 
@@ -361,15 +430,30 @@ xclock -t medium -p matrix
 # Build the debug binary
 cargo build
 
-# Run the test suite (53 tests across all modules)
+# Check formatting (rustfmt, from the pinned toolchain)
+cargo fmt --all -- --check
+
+# Run the test suite
 cargo test
 
-# Run clippy linter (warning-free)
+# Run the clippy linter (warning-free, also clean under -W clippy::pedantic)
 cargo clippy --all-targets
 
 # Build the optimized release binary
 cargo build --release
 ```
+
+Continuous integration runs the same commands on every push and pull request,
+plus a `cargo audit` dependency check. Locally, the full gate is:
+
+```bash
+cargo fmt --all -- --check \
+  && cargo clippy --all-targets --locked -- -D warnings \
+  && cargo test --all-targets --locked
+```
+
+Development conventions, the architecture invariants and the list of tests that
+guard them live in [`IDEA.md`](IDEA.md).
 
 ### Testing Strategy
 
@@ -388,7 +472,10 @@ The test suite validates:
 
 - [`crossterm 0.29`](https://crates.io/crates/crossterm) — Cross-platform terminal manipulation, raw mode, alternate screen, event polling, and Truecolor styling.
 - [`chrono 0.4`](https://crates.io/crates/chrono) — Local system date, time zone resolution, and calendar calculation.
-- [`ctrlc 3`](https://crates.io/crates/ctrlc) — Cross-platform signal handling to ensure clean terminal state teardown on `SIGINT`.
+- [`ctrlc 3`](https://crates.io/crates/ctrlc) — Signal handling with the `termination` feature, so `SIGINT`, `SIGTERM` and `SIGHUP` all exit with a clean terminal. `SIGQUIT`, `SIGKILL` and `SIGSTOP` are not trapped.
+
+`Cargo.lock` is committed, the binary depends on exactly three crates, and CI
+runs `cargo audit` against the locked graph.
 
 ---
 

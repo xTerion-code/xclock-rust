@@ -1,7 +1,10 @@
+#![forbid(unsafe_code)]
+
 mod app;
 mod cli;
 mod display;
 mod font;
+mod parse;
 mod terminal;
 mod theme;
 mod ui;

@@ -2,9 +2,18 @@
 name = "xclock"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
 description = "Terminal clock in Rust: large block digit face, date with weekday, frame and blinking colon on crossterm"
+license = "MIT"
+repository = "https://github.com/xTerionsilker/xClock-Rust"
+readme = "README.md"
+keywords = ["clock", "terminal", "tui", "crossterm", "wallpaper"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 chrono = "0.4"
-ctrlc = "3"
+ctrlc = { version = "3", features = ["termination"] }
 crossterm = "0.29"
+
+[lints.rust]
+unsafe_code = "forbid"

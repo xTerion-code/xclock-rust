@@ -1,14 +1,18 @@
 use std::fmt::Write as _;
+use std::str::FromStr;
 
 use crate::display::{DisplayOptions, HourFormat};
-use crate::theme::{Palette, Theme};
+use crate::theme::{Palette, Theme, palette_ids, theme_ids};
+use crate::ui::{HINT_FULL, HINT_SHORT};
 
+#[derive(Debug)]
 pub struct Config {
     pub theme: Theme,
     pub palette: Palette,
     pub display: DisplayOptions,
 }
 
+#[derive(Debug)]
 pub enum Action {
     Run(Config),
     Help,
@@ -24,6 +28,7 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
     let mut hour_format = HourFormat::default();
     let mut blink_colon = true;
     let mut show_date = true;
+    let mut show_hint = true;
 
     let mut it = args.iter().skip(1);
     while let Some(arg) = it.next() {
@@ -51,31 +56,29 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
             show_date = true;
         } else if arg == "--no-date" || arg == "--hide-date" {
             show_date = false;
+        } else if arg == "--show-hint" {
+            show_hint = true;
+        } else if arg == "--no-hint" || arg == "--hide-hint" || arg == "--minimal" {
+            show_hint = false;
         } else if arg == "--12h" {
             hour_format = HourFormat::H12;
         } else if arg == "--24h" {
             hour_format = HourFormat::H24;
         } else if arg == "-t" || arg == "--theme" {
-            let value = it
-                .next()
-                .ok_or_else(|| format!("missing value: `{arg}` expects one of: {}", theme_ids()))?;
-            theme = parse_theme(value)?;
+            let value = next_value(&mut it, arg, theme_ids)?;
+            theme = Theme::from_str(&value).map_err(|e| e.to_string())?;
         } else if let Some(value) = arg.strip_prefix("--theme=") {
-            theme = parse_theme(value)?;
+            theme = Theme::from_str(value).map_err(|e| e.to_string())?;
         } else if arg == "-p" || arg == "--palette" {
-            let value = it.next().ok_or_else(|| {
-                format!("missing value: `{arg}` expects one of: {}", palette_ids())
-            })?;
-            palette = parse_palette(value)?;
+            let value = next_value(&mut it, arg, palette_ids)?;
+            palette = Palette::from_str(&value).map_err(|e| e.to_string())?;
         } else if let Some(value) = arg.strip_prefix("--palette=") {
-            palette = parse_palette(value)?;
-        } else if let Some(value) = arg.strip_prefix("--hour-format=") {
-            hour_format = parse_hour_format(value)?;
+            palette = Palette::from_str(value).map_err(|e| e.to_string())?;
         } else if arg == "--hour-format" {
-            let value = it.next().ok_or_else(|| {
-                "missing value: `--hour-format` expects one of: 12, 12h, 24, 24h".to_string()
-            })?;
-            hour_format = parse_hour_format(value)?;
+            let value = next_value(&mut it, arg, || "12, 12h, 24, 24h".to_string())?;
+            hour_format = HourFormat::from_str(&value).map_err(|e| e.to_string())?;
+        } else if let Some(value) = arg.strip_prefix("--hour-format=") {
+            hour_format = HourFormat::from_str(value).map_err(|e| e.to_string())?;
         } else {
             return Err(format!("unexpected argument `{arg}`"));
         }
@@ -84,6 +87,7 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
     let mut display = DisplayOptions::with_hour_format(show_seconds, hour_format);
     display.blink_colon = blink_colon;
     display.show_date = show_date;
+    display.show_hint = show_hint;
     Ok(Action::Run(Config {
         theme,
         palette,
@@ -91,44 +95,20 @@ pub fn parse(args: &[String]) -> Result<Action, String> {
     }))
 }
 
-fn parse_theme(value: &str) -> Result<Theme, String> {
-    Theme::from_str(value)
-        .ok_or_else(|| format!("unknown theme `{value}` (expected one of: {})", theme_ids()))
-}
-
-fn parse_palette(value: &str) -> Result<Palette, String> {
-    Palette::from_str(value).ok_or_else(|| {
-        format!(
-            "unknown palette `{value}` (expected one of: {})",
-            palette_ids()
-        )
-    })
-}
-
-fn parse_hour_format(value: &str) -> Result<HourFormat, String> {
-    HourFormat::from_str(value)
-        .ok_or_else(|| format!("unknown hour format `{value}` (expected one of: 12, 12h, 24, 24h)"))
-}
-
-fn theme_ids() -> String {
-    Theme::all()
-        .iter()
-        .map(|t| t.id())
-        .collect::<Vec<_>>()
-        .join(", ")
-}
-
-fn palette_ids() -> String {
-    Palette::all()
-        .iter()
-        .map(|p| p.id())
-        .collect::<Vec<_>>()
-        .join(", ")
+/// Reads the value of a flag that was given as a separate argument.
+fn next_value<'a>(
+    it: &mut impl Iterator<Item = &'a String>,
+    flag: &str,
+    expected: impl Fn() -> String,
+) -> Result<String, String> {
+    it.next()
+        .cloned()
+        .ok_or_else(|| format!("missing value: `{flag}` expects one of: {}", expected()))
 }
 
 pub fn usage() -> String {
     format!(
-        "Usage: xclock [--theme <name> | -t <name>] [--palette <name> | -p <name>] [--show-seconds | --no-seconds] [--12h | --24h] [--blink | --no-blink] [--show-date | --no-date] [--list-themes] [--list-palettes] [-v | --version] [--help]\n\
+        "Usage: xclock [--theme <name> | -t <name>] [--palette <name> | -p <name>] [--show-seconds | --no-seconds] [--12h | --24h] [--blink | --no-blink] [--show-date | --no-date] [--show-hint | --no-hint] [--list-themes] [--list-palettes] [-v | --version] [--help]\n\
          \n\
          Options:\n  \
            -t, --theme <name>    clock theme (default: large): {}\n  \
@@ -142,14 +122,18 @@ pub fn usage() -> String {
            --no-blink            steady colon\n  \
            --show-date           show date (default)\n  \
            --no-date             hide date\n  \
+           --show-hint           show the live-keys hint row (default)\n  \
+           --no-hint             hide the hint row\n  \
            --list-themes         list available themes\n  \
            --list-palettes       list available color palettes\n  \
            -v, -V, --version     show version information\n  \
-           -h, --help            show this help\n\
+           -h, --help            show this help\n  \
          \n\
-         Live keys: 1/2/3/a switch theme, t cycles theme, p cycles palette, s toggles seconds, h toggles 12/24h, b toggles blink, d toggles date, q or Esc quits.",
+         Live keys: {}\n\
+         The hint row shortens itself on narrow terminals and disappears entirely when it cannot fit. Use --no-hint to always remove it.",
         theme_ids(),
-        palette_ids()
+        palette_ids(),
+        HINT_FULL,
     )
 }
 
@@ -159,7 +143,13 @@ pub fn themes_list() -> String {
         // Writing into a `String` cannot fail.
         let _ = writeln!(out, "  {:<8} {}", t.id(), t.description());
     }
-    out.push_str("\nLive keys: press 1/2/3/a to switch, t to cycle themes, p to cycle palette, s to toggle seconds, h to toggle 12/24h, b to toggle blink, d to toggle date, q or Esc to quit.");
+    out.push('\n');
+    out.push_str("Live keys: ");
+    out.push_str(HINT_FULL);
+    out.push('\n');
+    out.push_str("On narrow terminals the frame shows a shorter reminder: ");
+    out.push_str(HINT_SHORT);
+    out.push('\n');
     out
 }
 
@@ -168,6 +158,9 @@ pub fn palettes_list() -> String {
     for p in Palette::all() {
         // Writing into a `String` cannot fail.
         let _ = writeln!(out, "  {:<12} {}", p.id(), p.description());
+        if !p.aliases().is_empty() {
+            let _ = writeln!(out, "  {:<12} aliases: {}", "", p.aliases().join(", "));
+        }
     }
     out.push_str("\nLive key: press p to cycle palettes.");
     out
@@ -198,6 +191,9 @@ mod tests {
         assert_eq!(c.theme, Theme::Large);
         assert_eq!(c.palette, Palette::BlackRed);
         assert!(c.display.show_seconds);
+        assert!(c.display.show_hint);
+        assert!(c.display.show_date);
+        assert!(c.display.blink_colon);
         assert_eq!(c.display.hour_format, HourFormat::H24);
     }
 
@@ -287,6 +283,19 @@ mod tests {
     }
 
     #[test]
+    fn toggles_hint_from_cli_last_flag_wins() {
+        assert!(run_config(&["xclock"]).display.show_hint);
+        assert!(!run_config(&["xclock", "--no-hint"]).display.show_hint);
+        assert!(!run_config(&["xclock", "--hide-hint"]).display.show_hint);
+        assert!(!run_config(&["xclock", "--minimal"]).display.show_hint);
+        assert!(
+            run_config(&["xclock", "--no-hint", "--show-hint"])
+                .display
+                .show_hint
+        );
+    }
+
+    #[test]
     fn accepts_palette_flags_and_aliases() {
         assert_eq!(
             run_config(&["xclock", "--palette", "black-red"]).palette,
@@ -332,55 +341,83 @@ mod tests {
 
     #[test]
     fn rejects_unknown_theme_and_flag() {
-        assert!(parse(&args(&["xclock", "--theme", "retro"])).is_err());
-        assert!(parse(&args(&["xclock", "--palette", "neon"])).is_err());
-        assert!(parse(&args(&["xclock", "-p"])).is_err());
+        let e = parse(&args(&["xclock", "--theme", "retro"])).unwrap_err();
+        assert!(e.starts_with("unknown theme `retro`"), "{e}");
+        let e = parse(&args(&["xclock", "--palette", "neon"])).unwrap_err();
+        assert!(e.starts_with("unknown palette `neon`"), "{e}");
+        let e = parse(&args(&["xclock", "-p"])).unwrap_err();
+        assert!(e.starts_with("missing value: `-p`"), "{e}");
         assert!(parse(&args(&["xclock", "--bogus"])).is_err());
         assert!(parse(&args(&["xclock", "-t"])).is_err());
+        assert!(parse(&args(&["xclock", "--theme="])).is_err());
     }
 
     #[test]
     fn help_and_list_actions() {
-        assert!(matches!(
-            parse(&args(&["xclock", "--help"])),
-            Ok(Action::Help)
-        ));
-        assert!(matches!(parse(&args(&["xclock", "-h"])), Ok(Action::Help)));
-        assert!(matches!(
-            parse(&args(&["xclock", "--version"])),
-            Ok(Action::Version)
-        ));
-        assert!(matches!(
-            parse(&args(&["xclock", "-v"])),
-            Ok(Action::Version)
-        ));
-        assert!(matches!(
-            parse(&args(&["xclock", "-V"])),
-            Ok(Action::Version)
-        ));
-        assert!(matches!(
-            parse(&args(&["xclock", "--list-themes"])),
-            Ok(Action::ListThemes)
-        ));
-        assert!(matches!(
-            parse(&args(&["xclock", "--list-palettes"])),
-            Ok(Action::ListPalettes)
-        ));
-    }
-
-    #[test]
-    fn usage_lists_all_theme_ids() {
-        let u = usage();
-        for t in Theme::all() {
-            assert!(u.contains(t.id()), "usage missing {}", t.id());
+        for argv in [
+            vec!["xclock", "--help"],
+            vec!["xclock", "-h"],
+            vec!["xclock", "--version"],
+            vec!["xclock", "-v"],
+            vec!["xclock", "-V"],
+            vec!["xclock", "--list-themes"],
+            vec!["xclock", "--list-palettes"],
+        ] {
+            let action = parse(&args(&argv)).unwrap();
+            let ok = matches!(
+                action,
+                Action::Help | Action::Version | Action::ListThemes | Action::ListPalettes
+            );
+            assert!(ok, "{argv:?} should not start the TUI");
         }
     }
 
     #[test]
-    fn usage_lists_all_palette_ids() {
+    fn help_is_returned_even_after_other_flags() {
+        assert!(matches!(
+            parse(&args(&["xclock", "--no-date", "--help"])),
+            Ok(Action::Help)
+        ));
+    }
+
+    #[test]
+    fn usage_lists_every_catalog_id() {
         let u = usage();
+        for t in Theme::all() {
+            assert!(u.contains(t.id()), "usage missing {}", t.id());
+        }
         for p in Palette::all() {
             assert!(u.contains(p.id()), "usage missing {}", p.id());
+        }
+        // The live keys are documented from the very string that is rendered.
+        assert!(u.contains(HINT_FULL), "usage missing the live keys");
+        assert!(u.contains("--no-hint"), "usage missing --no-hint");
+    }
+
+    #[test]
+    fn listings_describe_every_entry() {
+        let themes = themes_list();
+        for t in Theme::all() {
+            assert!(themes.contains(t.id()), "listing missing {}", t.id());
+            assert!(
+                themes.contains(t.description()),
+                "listing missing description of {}",
+                t.id()
+            );
+        }
+        assert!(themes.contains(HINT_FULL));
+
+        let palettes = palettes_list();
+        for p in Palette::all() {
+            assert!(palettes.contains(p.id()), "listing missing {}", p.id());
+            assert!(
+                palettes.contains(p.description()),
+                "listing missing description of {}",
+                p.id()
+            );
+            for alias in p.aliases() {
+                assert!(palettes.contains(alias), "listing missing alias {alias}");
+            }
         }
     }
 }

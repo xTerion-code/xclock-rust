@@ -1,4 +1,8 @@
 use chrono::{DateTime, Datelike, Local, Timelike, Weekday};
+use std::str::FromStr;
+
+use crate::font::FaceLayout;
+use crate::parse::ParseError;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum HourFormat {
@@ -18,22 +22,34 @@ impl HourFormat {
             HourFormat::H12 => HourFormat::H24,
         }
     }
+}
 
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s.to_lowercase().as_str() {
-            "12" | "12h" => Some(HourFormat::H12),
-            "24" | "24h" => Some(HourFormat::H24),
-            _ => None,
+impl FromStr for HourFormat {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "12" | "12h" => Ok(HourFormat::H12),
+            "24" | "24h" => Ok(HourFormat::H24),
+            _ => Err(ParseError::new("hour format", s, "12, 12h, 24, 24h")),
         }
     }
 }
 
+/// Everything the user can change while `xclock` is running.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "five independent user-visible switches"
+)]
 pub struct DisplayOptions {
     pub show_seconds: bool,
     pub hour_format: HourFormat,
     pub blink_colon: bool,
     pub show_date: bool,
+    /// Live-keys hint row inside the frame. Off is the mode to use for
+    /// wallpapers and tiny panes where the row is pure noise.
+    pub show_hint: bool,
 }
 
 impl DisplayOptions {
@@ -47,7 +63,13 @@ impl DisplayOptions {
             hour_format,
             blink_colon: true,
             show_date: true,
+            show_hint: true,
         }
+    }
+
+    /// Geometry-relevant view of these options.
+    pub fn face(self) -> FaceLayout {
+        FaceLayout::new(self.show_seconds, self.show_date, self.show_hint)
     }
 
     pub fn toggle_seconds(&mut self) {
@@ -65,6 +87,10 @@ impl DisplayOptions {
     pub fn toggle_date(&mut self) {
         self.show_date = !self.show_date;
     }
+
+    pub fn toggle_hint(&mut self) {
+        self.show_hint = !self.show_hint;
+    }
 }
 
 impl Default for DisplayOptions {
@@ -73,18 +99,34 @@ impl Default for DisplayOptions {
     }
 }
 
-pub fn format_time(now: &DateTime<Local>, options: DisplayOptions) -> String {
-    let use_12h = options.hour_format == HourFormat::H12;
-    if options.show_seconds {
-        if use_12h {
-            now.format("%I:%M:%S").to_string()
-        } else {
-            now.format("%H:%M:%S").to_string()
-        }
-    } else if use_12h {
-        now.format("%I:%M").to_string()
-    } else {
-        now.format("%H:%M").to_string()
+/// The rendered time string plus the index at which the seconds field starts.
+///
+/// Palettes colour digits by position; deriving the boundary from the string
+/// that was actually formatted keeps the colours correct even if the time
+/// format changes length.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct TimeFace {
+    pub text: String,
+    pub seconds_start: Option<usize>,
+}
+
+pub fn format_time(now: &DateTime<Local>, options: DisplayOptions) -> TimeFace {
+    let pattern = match (options.hour_format, options.show_seconds) {
+        (HourFormat::H12, true) => "%I:%M:%S",
+        (HourFormat::H12, false) => "%I:%M",
+        (HourFormat::H24, true) => "%H:%M:%S",
+        (HourFormat::H24, false) => "%H:%M",
+    };
+    let text = now.format(pattern).to_string();
+    // `HH:MM[:SS]`: after the first colon come two minute digits, the second
+    // colon, and then the seconds. The boundary is derived from the string
+    // itself, so a different field layout cannot silently shift the colours.
+    let seconds_start = options
+        .show_seconds
+        .then(|| text.find(':').map_or(text.chars().count(), |i| i + 4));
+    TimeFace {
+        text,
+        seconds_start,
     }
 }
 
@@ -159,63 +201,69 @@ mod tests {
 
     #[test]
     fn parses_known_ids() {
-        assert_eq!(HourFormat::from_str("12"), Some(HourFormat::H12));
-        assert_eq!(HourFormat::from_str("12h"), Some(HourFormat::H12));
-        assert_eq!(HourFormat::from_str("24"), Some(HourFormat::H24));
-        assert_eq!(HourFormat::from_str("24H"), Some(HourFormat::H24));
-        assert_eq!(HourFormat::from_str("13"), None);
-        assert_eq!(HourFormat::from_str(""), None);
+        assert_eq!("12".parse::<HourFormat>(), Ok(HourFormat::H12));
+        assert_eq!("12h".parse::<HourFormat>(), Ok(HourFormat::H12));
+        assert_eq!("24".parse::<HourFormat>(), Ok(HourFormat::H24));
+        assert_eq!("24H".parse::<HourFormat>(), Ok(HourFormat::H24));
+        assert!("13".parse::<HourFormat>().is_err());
+        assert!("".parse::<HourFormat>().is_err());
+    }
+
+    #[test]
+    fn parse_error_names_the_option() {
+        let e = "13".parse::<HourFormat>().unwrap_err();
+        assert_eq!(
+            e.to_string(),
+            "unknown hour format `13` (expected one of: 12, 12h, 24, 24h)"
+        );
     }
 
     #[test]
     fn default_shows_seconds() {
         assert!(DisplayOptions::default().show_seconds);
+        assert!(DisplayOptions::default().show_hint);
     }
 
     #[test]
-    fn toggle_flips_show_seconds() {
+    fn toggles_flip_every_option() {
         let mut o = DisplayOptions::default();
         o.toggle_seconds();
         assert!(!o.show_seconds);
         o.toggle_seconds();
         assert!(o.show_seconds);
-    }
-
-    #[test]
-    fn toggle_hour_format_flips_format() {
-        let mut o = DisplayOptions::default();
-        assert_eq!(o.hour_format, HourFormat::H24);
         o.toggle_hour_format();
         assert_eq!(o.hour_format, HourFormat::H12);
         o.toggle_hour_format();
         assert_eq!(o.hour_format, HourFormat::H24);
-    }
-
-    #[test]
-    fn blink_defaults_on_and_toggles() {
-        let mut o = DisplayOptions::default();
         assert!(o.blink_colon);
         o.toggle_blink();
         assert!(!o.blink_colon);
-        o.toggle_blink();
-        assert!(o.blink_colon);
-    }
-
-    #[test]
-    fn date_defaults_shown_and_toggles() {
-        let mut o = DisplayOptions::default();
         assert!(o.show_date);
         o.toggle_date();
         assert!(!o.show_date);
+        o.toggle_hint();
+        assert!(!o.show_hint);
+        o.toggle_hint();
+        assert!(o.show_hint);
+    }
+
+    #[test]
+    fn face_mirrors_the_geometry_flags() {
+        let mut o = DisplayOptions::default();
+        assert_eq!(o.face(), FaceLayout::new(true, true, true));
         o.toggle_date();
-        assert!(o.show_date);
+        o.toggle_hint();
+        assert_eq!(o.face(), FaceLayout::new(true, false, false));
     }
 
     #[test]
     fn formats_with_and_without_seconds() {
         let now = Local.with_ymd_and_hms(2026, 9, 30, 12, 34, 56).unwrap();
-        assert_eq!(format_time(&now, DisplayOptions::new(true)), "12:34:56");
-        assert_eq!(format_time(&now, DisplayOptions::new(false)), "12:34");
+        assert_eq!(
+            format_time(&now, DisplayOptions::new(true)).text,
+            "12:34:56"
+        );
+        assert_eq!(format_time(&now, DisplayOptions::new(false)).text, "12:34");
     }
 
     #[test]
@@ -225,11 +273,36 @@ mod tests {
         let midnight = Local.with_ymd_and_hms(2026, 9, 30, 0, 5, 6).unwrap();
         let noon = Local.with_ymd_and_hms(2026, 9, 30, 12, 34, 56).unwrap();
         let evening = Local.with_ymd_and_hms(2026, 9, 30, 23, 7, 8).unwrap();
-        assert_eq!(format_time(&midnight, h12), "12:05:06");
-        assert_eq!(format_time(&noon, h12), "12:34:56");
-        assert_eq!(format_time(&evening, h12), "11:07:08");
-        assert_eq!(format_time(&midnight, h12_no_sec), "12:05");
-        assert_eq!(format_time(&evening, h12_no_sec), "11:07");
+        assert_eq!(format_time(&midnight, h12).text, "12:05:06");
+        assert_eq!(format_time(&noon, h12).text, "12:34:56");
+        assert_eq!(format_time(&evening, h12).text, "11:07:08");
+        assert_eq!(format_time(&midnight, h12_no_sec).text, "12:05");
+        assert_eq!(format_time(&evening, h12_no_sec).text, "11:07");
+    }
+
+    #[test]
+    fn seconds_start_points_at_the_second_field() {
+        let now = Local.with_ymd_and_hms(2026, 9, 30, 12, 34, 56).unwrap();
+        // `12:34:56` — seconds start one column past the minutes colon.
+        let with = format_time(&now, DisplayOptions::new(true));
+        assert_eq!(with.seconds_start, Some(6));
+        assert_eq!(with.text.chars().nth(6), Some('5'));
+        let without = format_time(&now, DisplayOptions::new(false));
+        assert_eq!(without.seconds_start, None);
+    }
+
+    #[test]
+    fn seconds_start_follows_the_actual_string_not_a_constant() {
+        // Every 12h value is two digits, so the boundary never moves.
+        for hour in 0..24 {
+            let now = Local.with_ymd_and_hms(2026, 9, 30, hour, 59, 59).unwrap();
+            for format in [HourFormat::H12, HourFormat::H24] {
+                let face = format_time(&now, DisplayOptions::with_hour_format(true, format));
+                let start = face.seconds_start.expect("seconds shown");
+                assert_eq!(face.text.chars().count(), 8);
+                assert_eq!(face.text.as_bytes()[start], b'5', "hour {hour}");
+            }
+        }
     }
 
     #[test]
